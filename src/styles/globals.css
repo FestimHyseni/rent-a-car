@@ -24,3 +24,205 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* in your styles/globals.css or a new dedicated e.g., datepicker-theme.css imported into your project */
+
+/* Import Tailwind base, components, utilities first if this is your main global file */
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
+
+/* react-datepicker custom theme */
+
+/* Main Popper - The floating container */
+.react-datepicker-popper {
+  @apply shadow-2xl rounded-xl border border-gray-200/70 z-50 bg-white;
+  /* bg-white is added here to ensure the popper itself has the base background */
+}
+
+
+
+/* Header section (month/year navigation) */
+
+
+/* Month and Year display in header */
+.react-datepicker__current-month {
+  @apply text-base font-semibold text-green-600 mb-3 text-center tracking-wide;
+}
+
+/* Navigation buttons (previous/next month) */
+/* In your styles/globals.css or datepicker-theme.css */
+
+/* ... (other styles from previous answer) ... */
+
+.react-datepicker {
+  @apply font-sans text-sm border-0 rounded-xl;
+  /* overflow-hidden; */ /* TEMPORARILY COMMENT THIS OUT or remove if it's the cause */
+  /* If removing overflow-hidden breaks the rounded look for elements inside,
+     we need to ensure navigation buttons are positioned safely within bounds. */
+}
+
+/* Header section (month/year navigation) */
+.react-datepicker__header {
+  @apply bg-gray-50 pt-4 pb-2 px-2 rounded-t-xl border-b border-gray-200 text-gray-800 relative;
+  /* Added `position: relative` just in case, though navigation is usually relative to .react-datepicker */
+}
+
+/* Navigation buttons (previous/next month) */
+.react-datepicker__navigation {
+  position: absolute;
+  top: 10px; /* Default-like position */
+  width: 32px; /* Ensure it has dimensions */
+  height: 32px;
+  z-index: 1; /* Default z-index for navigation */
+  background: rgba(0, 255, 0, 0.1); /* TEMPORARY: Light green background to see its bounds */
+  border: 1px solid red; /* TEMPORARY: Red border to see its bounds */
+}
+
+.react-datepicker__navigation--previous {
+  left: 10px;
+}
+
+.react-datepicker__navigation--next {
+  right: 10px;
+}
+
+/* Ensure the icon itself is visible if it's a pseudo-element */
+.react-datepicker__navigation-icon::before {
+  border-color: #333; /* Dark color for visibility */
+  /* You might need to ensure its default styling for shape is active */
+}
+
+
+/* Day names (Mon, Tue, etc.) */
+.react-datepicker__day-names {
+  @apply mt-2 mb-1 px-2;
+}
+.react-datepicker__day-name {
+  @apply w-10 h-10 flex items-center justify-center text-xs uppercase font-medium text-gray-500;
+}
+
+/* Weeks */
+.react-datepicker__week {
+  @apply flex justify-around my-0.5 px-1;
+}
+
+/* Individual Days */
+.react-datepicker__day {
+  @apply w-10 h-10 flex items-center justify-center rounded-lg m-px /* slight margin for spacing */
+         text-gray-700 cursor-pointer transition-all duration-200 ease-in-out
+         hover:bg-green-100 hover:shadow-sm;
+}
+.react-datepicker__day--today { /* Today's date, not selected */
+  @apply font-semibold !text-green-500 bg-green-50 border border-green-300;
+}
+.react-datepicker__day--today:hover {
+  @apply bg-green-100;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  @apply !bg-green-500 !text-white font-semibold shadow-md;
+}
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--in-selecting-range:hover,
+.react-datepicker__day--in-range:hover {
+  @apply !bg-green-600;
+}
+
+/* Special case for today if it's also selected or in range */
+.react-datepicker__day--selected.react-datepicker__day--today,
+.react-datepicker__day--in-range.react-datepicker__day--today {
+   @apply !bg-green-500 !text-white font-semibold !border-transparent; /* Override today's border if selected */
+}
+
+.react-datepicker__day--keyboard-selected { /* For keyboard navigation */
+  @apply bg-green-200 text-green-800;
+}
+.react-datepicker__day--disabled {
+  @apply !text-gray-300 !cursor-not-allowed hover:!bg-transparent hover:!shadow-none;
+}
+.react-datepicker__day--outside-month {
+  @apply !text-gray-400/70 hover:!bg-gray-50;
+}
+
+/* Time picker section */
+.react-datepicker__time-container {
+  @apply border-l border-gray-200 w-40; /* Fixed width for time container */
+}
+.react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+  @apply w-full !p-0; /* Ensure it fills the container and remove default padding */
+}
+.react-datepicker__header--time { /* Header for time selection (e.g., "Time") */
+  @apply text-sm font-medium text-center text-gray-600 pt-3 pb-1 border-b border-gray-200;
+  /* Adjust line height if it exists */
+  line-height: 1.5rem !important; /* Example: Adjust to ensure visibility */
+}
+
+.react-datepicker__time-list {
+  @apply space-y-0 list-none pl-0 my-0 h-[calc(100%-2.5rem)] overflow-y-auto; /* Adjust height based on header */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: theme('colors.green.300') theme('colors.gray.100'); /* Firefox */
+}
+/* Webkit scrollbar styling */
+.react-datepicker__time-list::-webkit-scrollbar {
+  @apply w-1.5;
+}
+.react-datepicker__time-list::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+.react-datepicker__time-list::-webkit-scrollbar-thumb {
+  @apply bg-green-300 rounded;
+}
+.react-datepicker__time-list::-webkit-scrollbar-thumb:hover {
+  @apply bg-green-400;
+}
+
+.react-datepicker__time-list-item {
+  @apply h-auto px-3 py-2.5 text-sm text-center text-gray-800 cursor-pointer
+         hover:bg-green-100 transition-colors duration-150 ease-in-out;
+}
+.react-datepicker__time-list-item--selected {
+  @apply !bg-green-500 !text-white font-semibold hover:!bg-green-600;
+}
+.react-datepicker__time-list-item--disabled {
+  @apply !text-gray-300 !cursor-not-allowed hover:!bg-transparent;
+}
+
+/* Month/Year Picker (if enabled via showMonthYearPicker or showQuarterYearPicker) */
+.react-datepicker__month-container,
+.react-datepicker__year-container { /* Assuming similar structure for year */
+  @apply px-1 py-2;
+}
+.react-datepicker__month-wrapper {
+  @apply flex flex-wrap;
+}
+.react-datepicker__month-text,
+.react-datepicker__year-text { /* Assuming year text has similar classes */
+  @apply w-[calc(33.333%-0.5rem)] m-1 p-3 text-center rounded-lg cursor-pointer hover:bg-green-100 text-sm;
+  /* Adjust width and margin as needed for 3 or 4 columns */
+}
+.react-datepicker__month-text--selected,
+.react-datepicker__year-text--selected {
+  @apply !bg-green-500 !text-white font-semibold;
+}
+.react-datepicker__month-text--disabled,
+.react-datepicker__year-text--disabled {
+  @apply !text-gray-300 cursor-not-allowed hover:!bg-transparent;
+}
+
+/* Hide the default triangle arrow of the popper */
+.react-datepicker__triangle {
+  @apply hidden;
+}
+
+/* If you use showYearDropdown and showMonthDropdown */
+.react-datepicker__year-dropdown-container,
+.react-datepicker__month-dropdown-container {
+  /* Example: Add some margin if they are too close */
+  /* @apply mx-1; */
+}
+.react-datepicker__year-select,
+.react-datepicker__month-select {
+ @apply p-1.5 rounded-md border border-gray-300 bg-white text-sm hover:border-gray-400 focus:border-green-500 focus:ring-green-500 focus:ring-1;
+}
