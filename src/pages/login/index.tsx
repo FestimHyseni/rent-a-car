@@ -43,7 +43,7 @@ const LoginPage: React.FC<LoginProps> = ({ csrfToken, providers }) => {
       setError(result.error);
     } else if (result?.ok) {
       // Successful login
-      router.push((router.query.callbackUrl as string) || "/"); // Redirect to dashboard or intended page
+      router.push((router.query.callbackUrl as string) || "/dashboard"); // Redirect to dashboard or intended page
     }
   };
 
