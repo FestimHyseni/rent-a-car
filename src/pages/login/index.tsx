@@ -11,6 +11,9 @@ import Link from "next/link";
 import { GetServerSidePropsContext } from "next";
 import { LockKeyhole, Mail, LogIn, Chrome } from "lucide-react"; // Example icons
 
+
+
+
 interface LoginProps {
   csrfToken?: string;
   providers: Awaited<ReturnType<typeof getProviders>>;
