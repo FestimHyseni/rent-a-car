@@ -21,7 +21,7 @@
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  
   font-family: Arial, Helvetica, sans-serif;
 }
 /* in your styles/globals.css or a new dedicated e.g., datepicker-theme.css imported into your project */

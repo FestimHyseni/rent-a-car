@@ -14,7 +14,8 @@ interface Props {
 export function MainLayout({ children, name }: Props) {
   const pathname = usePathname();
 
-  const hideHeaderAndNav = pathname.startsWith("/dashboard") || pathname.startsWith("/client");
+  const hideHeaderAndNav =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/client");
 
   return (
     <div>

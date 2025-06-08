@@ -1,10 +1,10 @@
-// pages/api/users/index.ts
+// pages/api/cars/index.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 const DB_NAME = "public";
-const COLLECTION_NAME = "users";
+const COLLECTION_NAME = "cars";
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,8 +14,9 @@ export default async function handler(
     try {
       const client = await clientPromise;
       const db = client.db(DB_NAME);
-      const users = await db.collection(COLLECTION_NAME).find().toArray();
-      return res.status(200).json(users);
+      const cars = await db.collection(COLLECTION_NAME).find().toArray();
+
+      return res.status(200).json(cars);
     } catch (error) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
@@ -25,18 +26,21 @@ export default async function handler(
     try {
       const client = await clientPromise;
       const db = client.db(DB_NAME);
-      const newUser = {
-        ...req.body,
+      const { pickUpLocation, dropOffLocation, ...resData } = req.body;
+      const newCar = {
+        ...resData,
+        pickUpLocation: new ObjectId(pickUpLocation),
+        dropOffLocation: new ObjectId(dropOffLocation),
+        status: "Available",
         createdAt: new Date(),
-        emailVerified: null,
-        image: "",
-        role: "user",
       };
-      const result = await db.collection(COLLECTION_NAME).insertOne(newUser);
+      const result = await db.collection(COLLECTION_NAME).insertOne(newCar);
       return res
         .status(201)
-        .json({ message: "User created", id: result.insertedId });
+        .json({ message: "Car created", id: result.insertedId });
     } catch (error) {
+      console.log(error);
+
       return res.status(500).json({ message: "Internal Server Error" });
     }
   }
@@ -47,16 +51,16 @@ export default async function handler(
       const db = client.db(DB_NAME);
       const { id } = req.body;
 
-      if (!id) return res.status(400).json({ message: "User ID is required" });
+      if (!id) return res.status(400).json({ message: "Car ID is required" });
 
       const result = await db
         .collection(COLLECTION_NAME)
         .deleteOne({ _id: new ObjectId(id) });
 
       if (result.deletedCount === 0)
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "Car not found" });
 
-      return res.status(200).json({ message: "User deleted successfully" });
+      return res.status(200).json({ message: "Car deleted successfully" });
     } catch (error) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
