@@ -1,0 +1,61 @@
+// models/Booking.ts or Booking.js
+import mongoose from "mongoose";
+const { Schema, model, Types } = mongoose;
+
+const bookingSchema = new Schema(
+    {
+        carId: {
+            type: Types.ObjectId,
+            ref: "Car", // Lidhja me tabelën/car koleksionin e makinave
+            required: true,
+        },
+        userId: {
+            type: Types.ObjectId,
+            ref: "User", // Lidhja me përdoruesin
+            required: true,
+        },
+        pickUpLocation: {
+            type: Types.ObjectId,
+            ref: "Location", // Lidhja me lokacionin e marrjes
+            required: true,
+        },
+        dropOffLocation: {
+            type: Types.ObjectId,
+            ref: "Location", // Lidhja me lokacionin e kthimit
+            required: true,
+        },
+        pickUpDate: {
+            type: Date,
+            required: true,
+        },
+        dropOffDate: {
+            type: Date,
+            required: true,
+        },
+        totalPrice: {
+            type: Number,
+            required: true,
+        },
+        status: {
+            type: String,
+            enum: ["Pending", "Confirmed", "Cancelled", "Completed"],
+            default: "Pending",
+        },
+        paymentStatus: {
+            type: String,
+            enum: ["Unpaid", "Paid", "Refunded"],
+            default: "Unpaid",
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+const Booking = model("Booking", bookingSchema);
+
+export default Booking;

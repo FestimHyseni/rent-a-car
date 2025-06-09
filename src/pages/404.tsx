@@ -1,5 +1,3 @@
-// For pages directory: pages/404.js
-// For app directory: app/not-found.js
 import Link from "next/link";
 import React from "react";
 
@@ -7,21 +5,19 @@ const NotFoundPage = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 text-white p-6">
       <div className="text-center">
-        {/* Car Icon SVG */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="mx-auto mb-8 h-24 w-24 text-sky-400 animate-pulse" // Changed animation to pulse for variety
+          className="mx-auto mb-8 h-24 w-24 text-sky-400 animate-pulse"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={1.5} // Slightly thicker stroke
+          strokeWidth={1.5}
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
             d="M8.25 20.25H15.75M12 16.5V20.25M4.5 12.75L6 6.75H18L19.5 12.75M4.5 12.75A2.25 2.25 0 002.25 15V18A2.25 2.25 0 004.5 20.25H5.25M19.5 12.75A2.25 2.25 0 0121.75 15V18A2.25 2.25 0 0119.5 20.25H18.75M4.5 12.75H19.5M15.75 6.75V5.25A1.5 1.5 0 0014.25 3.75H9.75A1.5 1.5 0 008.25 5.25V6.75"
           />
-          {/* Optional: Add small circles for wheels if desired, though the path implies them */}
           <circle cx="7.5" cy="18" r="1.5" fill="currentColor" stroke="none" />
           <circle cx="16.5" cy="18" r="1.5" fill="currentColor" stroke="none" />
         </svg>
@@ -38,10 +34,11 @@ const NotFoundPage = () => {
         </p>
 
         <div className="mt-10">
-          <Link href="/" legacyBehavior>
-            <a className="px-8 py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-sky-400/50">
-              Return to Garage (Homepage)
-            </a>
+          <Link
+            href="/"
+            className="px-8 py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-sky-400/50"
+          >
+            Return to Garage (Homepage)
           </Link>
         </div>
 

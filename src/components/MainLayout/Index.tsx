@@ -1,7 +1,7 @@
 "use client";
 
 import Head from "next/head";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import Header from "@/components/Header/Index";
 import Nav from "@/components/Nav/Index";
 import { usePathname } from "next/navigation";
@@ -14,8 +14,13 @@ interface Props {
 export function MainLayout({ children, name }: Props) {
   const pathname = usePathname();
 
-  const hideHeaderAndNav =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/client");
+  const [hideHeaderAndNav, setHideHeaderAndNav] = useState(false);
+
+  useEffect(() => {
+    setHideHeaderAndNav(
+      pathname.startsWith("/dashboard") || pathname.startsWith("/client")
+    );
+  }, [pathname]);
 
   return (
     <div>
