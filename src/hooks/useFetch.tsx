@@ -77,25 +77,27 @@ function useFetch<T>(url: string | null, skipInitialGet = false) {
   };
 
   // DELETE data
-  const deleteData = async (deleteUrl: string = url!) => {
-    try {
-      const response = await fetch(deleteUrl, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error deleting data:', error);
-      throw error;
+const deleteData = async (deleteUrl: string = url!, bodyData: any = {}) => {
+  try {
+    const response = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bodyData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
-  };
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting data:', error);
+    throw error;
+  }
+};
+
   
 
   return { data, loading, error, postData, putData, deleteData };

@@ -10,7 +10,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, isLoade
   const sidebarItems = [
     { id: 'dashboard', name: 'Dashboard', icon: BarChart3, gradient: 'from-indigo-600 to-blue-500', path: '/dashboard' },
     { id: 'cars', name: 'Makinat', icon: Car, gradient: 'from-purple-600 to-fuchsia-500', path: '/dashboard/cars' },
-    { id: 'bookings', name: 'Rezervimet', icon: Calendar, gradient: 'from-emerald-600 to-teal-500', path: '/rezervimet' },
+    { id: 'bookings', name: 'Rezervimet', icon: Calendar, gradient: 'from-emerald-600 to-teal-500', path: '/dashboard/bookings' },
     { id: 'customers', name: 'Klientët', icon: Users, gradient: 'from-rose-600 to-pink-500', path: '/dashboard/client' },
     { id: 'locations', name: 'Lokacionet', icon: MapPin, gradient: 'from-violet-600 to-purple-500', path: '/lokacionet' },
     { id: 'revenue', name: 'Të Ardhurat', icon: DollarSign, gradient: 'from-amber-600 to-orange-500', path: '/te-ardhurat' },

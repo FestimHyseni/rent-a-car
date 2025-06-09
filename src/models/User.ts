@@ -3,52 +3,38 @@ import mongoose, { Schema, Document, models, Model } from "mongoose";
 export interface IUser extends Document {
   name?: string;
   email?: string;
-  password?: string; // Will be selected explicitly when needed
+  password?: string;
   image?: string;
   emailVerified?: Date | null;
-  role: "user" | "admin"; // Define roles
-  // You can add more fields specific to your car rental app
-  // e.g., bookings, favorites, etc.
+  role: string;
+  country?: string;
+  city?: string;
+  number?: string;
+  address?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
   {
-    name: {
-      type: String,
-    },
-    email: {
-      type: String,
-      unique: true,
-      // sparse: true, // Use sparse if email is not always required (e.g. for OAuth providers that don't return email)
-    },
-    password: {
-      type: String,
-      select: false, // By default, do not return password
-    },
-    image: {
-      type: String,
-    },
-    emailVerified: {
-      type: Date,
-      default: null,
-    },
+    name: { type: String, required: true },
+    email: { type: String, unique: true, required: true },
+    password: { type: String, select: false },
+    image: { type: String },
+    emailVerified: { type: Date, default: null },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "staff"],
       default: "user",
     },
+    country: { type: String },
+    city: { type: String },
+    number: { type: String },
+    address: { type: String },
   },
-  { timestamps: true } // Adds createdAt and updatedAt automatically
+  { timestamps: true }
 );
 
-// For NextAuth adapter, it expects 'email' to be unique.
-// If you allow users to sign up with OAuth and then set a password (linking accounts),
-// ensure your logic handles potential email conflicts.
-
-// Check if the model already exists before defining it
-const User: Model<IUser> =
-  models.User || mongoose.model<IUser>("User", UserSchema);
+const User: Model<IUser> = models.User || mongoose.model<IUser>("User", UserSchema);
 
 export default User;

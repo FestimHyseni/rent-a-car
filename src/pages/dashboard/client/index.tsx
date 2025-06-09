@@ -29,15 +29,26 @@ import Navbar from "@/components/Navbar/Navbar";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import useFetch from "@/hooks/useFetch";
 import { IUser } from "@/models/User";
+import AddClient from "../create/client";
+import router from "next/router";
+import UpdateClient from "../update/client";
+import DetailsClient from "../details/client";
+import { exportClientsToCSV } from "../utils/client/exportClient";
+
 
 const ClientManagement = () => {
   const { data: users, loading, error } = useFetch<IUser[]>("/api/users");
   const { postData } = useFetch("/api/users");
+  const { deleteData } = useFetch("/api/users");
+
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
+  const [selectedClient, setSelectedClient] = useState<IUser | null>(null);
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
@@ -144,16 +155,15 @@ const ClientManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleSaveClient = async () => {
-    try {
-      const response = await postData(newClient);
-      setShowAddModal(false);
-      setNewClient({ name: "", email: "" });
-      window.location.reload(); // ose refetch me SWR
-    } catch (error) {
-      console.error("Failed to save client", error);
-    }
-  };
+ const handleSaveClient = async (client: any) => {
+  try {
+    const response = await postData(client); 
+    setShowAddModal(false);
+    window.location.reload(); 
+  } catch (error) {
+    console.error("Failed to save client", error);
+  }
+};
 
   const stats = [
     {
@@ -192,16 +202,28 @@ const ClientManagement = () => {
     },
   ];
 
+  const deleteClient = async (id: string) => {
+  try {
+    await deleteData("/api/users", {
+      id, 
+    });
+    window.location.reload(); 
+  } catch (error) {
+    console.error("Failed to delete client:", error);
+  }
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6">
-      <div className="max-w-[82rem] mx-auto">
-        <Sidebar
+       <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           isLoaded={isLoaded}
         />
+<div className="w-full max-w-[90rem] px-4 md:px-8 xl:px-12 mx-auto">
+       
 
         {/* Header */}
         <div className="mb-8">
@@ -221,7 +243,7 @@ const ClientManagement = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -277,10 +299,13 @@ const ClientManagement = () => {
               </div>
             </div>
             <div className="flex space-x-3">
-              <button className="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 text-gray-700">
-                <Download className="w-5 h-5" />
-                <span className="font-medium">Eksporto</span>
-              </button>
+              <button
+                  onClick={() => exportClientsToCSV(users || [])}
+                  className="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 text-gray-700"
+                >
+                  <Download className="w-5 h-5" />
+                  <span className="font-medium">Eksporto</span>
+                </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -294,7 +319,7 @@ const ClientManagement = () => {
         </div>
 
         {/* Clients Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => {
             const initials = client.name
               ? client.name
@@ -369,16 +394,34 @@ const ClientManagement = () => {
 
                 {/* Actions */}
                 <div className="flex space-x-2">
-                  <button className="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl transition-all duration-300">
-                    <Eye className="w-4 h-4" />
-                    <span className="text-sm font-medium">Detaje</span>
-                  </button>
-                  <button className="flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-all duration-300">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button className="flex items-center justify-center p-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-2xl transition-all duration-300">
+                  <button
+                  onClick={() => {
+                    setSelectedClient(client);
+                    setShowDetailsModal(true);
+                  }}
+                  className="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl transition-all duration-300"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="text-sm font-medium">Detaje</span>
+                </button>
+
+                 <button
+            onClick={() => {
+              setClientToUpdate(client);
+              setShowUpdateModal(true);
+            }}                  
+            className="flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-all duration-300"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+
+                  <button
+                    onClick={() => deleteClient(String(client._id))}
+                    className="flex items-center justify-center p-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-2xl transition-all duration-300"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
+
                 </div>
               </div>
             );
@@ -409,56 +452,40 @@ const ClientManagement = () => {
       </div>
 
       {/* Add Client Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-800">
-                Shto Klient të Ri
-              </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-2xl transition-all"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Emri i plotë"
-                onChange={(e) =>
-                  setNewClient({ ...newClient, name: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                onChange={(e) =>
-                  setNewClient({ ...newClient, email: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
+       {showAddModal && (
+  <AddClient
+    setShowAddModal={setShowAddModal}
+    handleSaveClient={handleSaveClient}
+  />
+)}
 
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-2xl hover:bg-gray-50 transition-all"
-                >
-                  Anulo
-                </button>
-                <button
-                  onClick={handleSaveClient}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:shadow-lg transition-all"
-                >
-                  Ruaj
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+{showUpdateModal && clientToUpdate && (
+  <UpdateClient
+    client={clientToUpdate}
+    setShowUpdateModal={setShowUpdateModal}
+  />
+)}
+
+{showDetailsModal && selectedClient && (
+  <DetailsClient
+    client={
+      selectedClient
+        ? {
+            name: selectedClient.name ?? "",
+            email: selectedClient.email ?? "",
+            number: selectedClient.number,
+            address: selectedClient.address,
+            city: selectedClient.city,
+            country: selectedClient.country,
+            role: selectedClient.role,
+            createdAt: selectedClient.createdAt,
+          }
+        : null
+    }
+    setShowDetailsModal={setShowDetailsModal}
+  />
+)}
+
     </div>
   );
 };
