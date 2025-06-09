@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 
 const DB_NAME = "public";
-const COLLECTION_NAME = "Locations";
+const COLLECTION_NAME = "locations";
 
 export default async function handler(
   req: NextApiRequest,

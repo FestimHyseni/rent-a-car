@@ -2,11 +2,11 @@ import mongoose, { Schema, Document, models, Model } from "mongoose";
 
 // Interface defining the structure of a Car document
 export interface ICar extends Document {
-  make: string;
-  makeModel: string;
+  make_id: mongoose.Schema.Types.ObjectId;
+  makeModel: mongoose.Schema.Types.ObjectId;
   category: string;
   year: number;
-  pricePerDay: number;
+  price: number;
   licensePlate: string;
   imageUrl?: string;
   status: "Available" | "Rented" | "Maintenance";
@@ -22,15 +22,15 @@ export interface ICar extends Document {
 // Mongoose Schema for the Car model
 const CarSchema: Schema<ICar> = new Schema(
   {
-    make: {
-      type: String,
+    make_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Brand",
       required: true,
-      trim: true,
     },
     makeModel: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Model",
       required: true,
-      trim: true,
     },
     category: {
       type: String,
@@ -41,7 +41,7 @@ const CarSchema: Schema<ICar> = new Schema(
       type: Number,
       required: true,
     },
-    pricePerDay: {
+    price: {
       type: Number,
       required: true,
     },

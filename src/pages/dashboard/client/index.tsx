@@ -35,19 +35,17 @@ import UpdateClient from "../update/client";
 import DetailsClient from "../details/client";
 import { exportClientsToCSV } from "../utils/client/exportClient";
 
-
 const ClientManagement = () => {
   const { data: users, loading, error } = useFetch<IUser[]>("/api/users");
   const { postData } = useFetch("/api/users");
   const { deleteData } = useFetch("/api/users");
-
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
+  const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
   const [selectedClient, setSelectedClient] = useState<IUser | null>(null);
   const [newClient, setNewClient] = useState({
     name: "",
@@ -151,19 +149,19 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
       false ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       false;
-    const matchesFilter = filterStatus === "all" || user.role === filterStatus;
+    const matchesFilter = filterStatus === "all";
     return matchesSearch && matchesFilter;
   });
 
- const handleSaveClient = async (client: any) => {
-  try {
-    const response = await postData(client); 
-    setShowAddModal(false);
-    window.location.reload(); 
-  } catch (error) {
-    console.error("Failed to save client", error);
-  }
-};
+  const handleSaveClient = async (client: any) => {
+    try {
+      const response = await postData(client);
+      setShowAddModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to save client", error);
+    }
+  };
 
   const stats = [
     {
@@ -203,28 +201,26 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
   ];
 
   const deleteClient = async (id: string) => {
-  try {
-    await deleteData("/api/users", {
-      id, 
-    });
-    window.location.reload(); 
-  } catch (error) {
-    console.error("Failed to delete client:", error);
-  }
-};
+    try {
+      await deleteData("/api/users", {
+        id,
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to delete client:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6">
-       <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          isLoaded={isLoaded}
-        />
-<div className="w-full max-w-[90rem] px-4 md:px-8 xl:px-12 mx-auto">
-       
-
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        isLoaded={isLoaded}
+      />
+      <div className="w-full max-w-[90rem] px-4 md:px-8 xl:px-12 mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
@@ -243,7 +239,7 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
         </div>
 
         {/* Stats Cards */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -300,12 +296,12 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
             </div>
             <div className="flex space-x-3">
               <button
-                  onClick={() => exportClientsToCSV(users || [])}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 text-gray-700"
-                >
-                  <Download className="w-5 h-5" />
-                  <span className="font-medium">Eksporto</span>
-                </button>
+                onClick={() => exportClientsToCSV(users || [])}
+                className="flex items-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-all duration-300 text-gray-700"
+              >
+                <Download className="w-5 h-5" />
+                <span className="font-medium">Eksporto</span>
+              </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -319,8 +315,10 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
         </div>
 
         {/* Clients Grid */}
-<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredClients.map((client) => {
+            console.log(client);
+
             const initials = client.name
               ? client.name
                   .split(" ")
@@ -329,13 +327,20 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
                   .slice(0, 2)
                   .toUpperCase()
               : "US";
-            const StatusIcon = getStatusIcon(client.role); // përdor `role` në vend të `status`
-            const roleLabel =
-              client.role === "admin" ? "Administrator" : "Përdorues";
-            const statusColor =
-              client.role === "admin"
-                ? "from-amber-500 to-orange-500"
-                : "from-blue-500 to-indigo-500";
+            const StatusIcon = getStatusIcon(String(client.role)); // përdor `role` në vend të `status`
+            let roleLabel;
+            let statusColor;
+            if (String(client.role) === "admin") {
+              roleLabel = "Administrator";
+              statusColor = "from-amber-500 to-orange-500";
+            } else if (String(client.role) === "staff") {
+              roleLabel = "Staff";
+              statusColor = "from-sky-500 to-cyan-500"; // Changed
+            } else {
+              // This handles "user" and any other potential values
+              roleLabel = "Përdorues";
+              statusColor = "from-blue-500 to-indigo-500";
+            }
 
             return (
               <div
@@ -395,25 +400,25 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
                 {/* Actions */}
                 <div className="flex space-x-2">
                   <button
-                  onClick={() => {
-                    setSelectedClient(client);
-                    setShowDetailsModal(true);
-                  }}
-                  className="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl transition-all duration-300"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span className="text-sm font-medium">Detaje</span>
-                </button>
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setShowDetailsModal(true);
+                    }}
+                    className="flex-1 flex items-center justify-center space-x-2 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-2xl transition-all duration-300"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span className="text-sm font-medium">Detaje</span>
+                  </button>
 
-                 <button
-            onClick={() => {
-              setClientToUpdate(client);
-              setShowUpdateModal(true);
-            }}                  
-            className="flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-all duration-300"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
+                  <button
+                    onClick={() => {
+                      setClientToUpdate(client);
+                      setShowUpdateModal(true);
+                    }}
+                    className="flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-all duration-300"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
 
                   <button
                     onClick={() => deleteClient(String(client._id))}
@@ -421,7 +426,6 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
-
                 </div>
               </div>
             );
@@ -452,40 +456,41 @@ const [clientToUpdate, setClientToUpdate] = useState<IUser | null>(null);
       </div>
 
       {/* Add Client Modal */}
-       {showAddModal && (
-  <AddClient
-    setShowAddModal={setShowAddModal}
-    handleSaveClient={handleSaveClient}
-  />
-)}
+      {showAddModal && (
+        <AddClient
+          setShowAddModal={setShowAddModal}
+          handleSaveClient={handleSaveClient}
+        />
+      )}
 
-{showUpdateModal && clientToUpdate && (
-  <UpdateClient
-    client={clientToUpdate}
-    setShowUpdateModal={setShowUpdateModal}
-  />
-)}
+      {showUpdateModal && clientToUpdate && (
+        <UpdateClient
+          client={clientToUpdate}
+          setShowUpdateModal={setShowUpdateModal}
+        />
+      )}
 
-{showDetailsModal && selectedClient && (
-  <DetailsClient
-    client={
-      selectedClient
-        ? {
-            name: selectedClient.name ?? "",
-            email: selectedClient.email ?? "",
-            number: selectedClient.number,
-            address: selectedClient.address,
-            city: selectedClient.city,
-            country: selectedClient.country,
-            role: selectedClient.role,
-            createdAt: selectedClient.createdAt,
+      {showDetailsModal && selectedClient && (
+        <DetailsClient
+          client={
+            selectedClient
+              ? {
+                  name: selectedClient.name ?? "",
+                  email: selectedClient.email ?? "",
+                  number: selectedClient.number,
+                  address: selectedClient.address,
+                  city: selectedClient.city,
+                  country: selectedClient.country,
+                  role: selectedClient.role
+                    ? String(selectedClient.role)
+                    : undefined,
+                  createdAt: selectedClient.createdAt,
+                }
+              : null
           }
-        : null
-    }
-    setShowDetailsModal={setShowDetailsModal}
-  />
-)}
-
+          setShowDetailsModal={setShowDetailsModal}
+        />
+      )}
     </div>
   );
 };

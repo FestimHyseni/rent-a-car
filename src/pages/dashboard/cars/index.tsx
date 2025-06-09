@@ -26,15 +26,15 @@ import {
 import Sidebar from "@/components/Sidebar/Sidebar";
 import useFetch from "@/hooks/useFetch";
 import { ICar } from "@/models/Car";
-
-const carBrands = {
-  BMW: ["Series 3", "Series 5", "Series 7", "X3", "X5", "X7"],
-  "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLE", "GLC"],
-  Audi: ["A3", "A4", "A6", "A8", "Q5", "Q7", "Q8"],
-  Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
-  Ford: ["Fiesta", "Focus", "Mustang", "Explorer"],
-  Toyota: ["Corolla", "Camry", "RAV4", "Land Cruiser"],
-};
+import AddCar from "../create/car";
+// const carBrands = {
+//   BMW: ["Series 3", "Series 5", "Series 7", "X3", "X5", "X7"],
+//   "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLE", "GLC"],
+//   Audi: ["A3", "A4", "A6", "A8", "Q5", "Q7", "Q8"],
+//   Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
+//   Ford: ["Fiesta", "Focus", "Mustang", "Explorer"],
+//   Toyota: ["Corolla", "Camry", "RAV4", "Land Cruiser"],
+// };
 const categories = [
   "Hatchback",
   "Luxury Car",
@@ -86,7 +86,7 @@ const CarManagement = () => {
     pickUpLocation: "",
     dropOffLocation: "",
     year: new Date().getFullYear(),
-    pricePerDay: 50,
+    price: 50,
     licensePlate: "",
     imageUrl: "",
     features: [] as string[], // Initialize features as an empty array
@@ -102,7 +102,7 @@ const CarManagement = () => {
     makeModel: string;
     category: string;
     year: number;
-    pricePerDay: number;
+    price: number;
     location: string;
     status: "Available" | "Rented" | "Maintenance";
     rating: number;
@@ -116,15 +116,17 @@ const CarManagement = () => {
   };
 
   const filteredCars = (cars || []).filter((car) => {
-    const carName = car.makeModel ? `${car.make} ${car.makeModel}` : car.make;
-    const matchesSearch = carName
+    const carName = car.makeModel
+      ? `${car.make_id} ${car.makeModel}`
+      : car.make_id;
+    const matchesSearch = String(carName)
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === "all" || car.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
-  const handleSaveCar = async () => {
+  const handleSaveCar = async (newCar: any) => {
     try {
       console.log(newCar);
 
@@ -138,7 +140,7 @@ const CarManagement = () => {
         pickUpLocation: "",
         dropOffLocation: "",
         year: new Date().getFullYear(),
-        pricePerDay: 50,
+        price: 50,
         licensePlate: "",
         imageUrl: "",
         features: [],
@@ -148,34 +150,6 @@ const CarManagement = () => {
     } catch (error) {
       console.error("Failed to save client", error);
     }
-  };
-
-  const handleNewCarChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-
-    if (name === "make") {
-      setNewCar({ ...newCar, make: value, makeModel: "" });
-    } else {
-      setNewCar({ ...newCar, [name]: value });
-    }
-  };
-
-  const handleAddFeature = () => {
-    if (currentFeature && !newCar.features.includes(currentFeature)) {
-      setNewCar({ ...newCar, features: [...newCar.features, currentFeature] });
-      setCurrentFeature(""); // Clear the input field
-    }
-  };
-
-  const handleRemoveFeature = (featureToRemove: string) => {
-    setNewCar({
-      ...newCar,
-      features: newCar.features.filter(
-        (feature) => feature !== featureToRemove
-      ),
-    });
   };
 
   function getStatusProps(status: "Available" | "Rented" | "Maintenance") {
@@ -342,7 +316,7 @@ const CarManagement = () => {
                 <div className="relative">
                   <img
                     src={car.imageUrl}
-                    alt={`${car.make} ${car.makeModel}`}
+                    alt={`${car.imageUrl}`}
                     className="w-full h-48 object-cover"
                   />
                   <div
@@ -355,9 +329,9 @@ const CarManagement = () => {
                 <div className="p-6 flex-grow flex flex-col">
                   <div className="flex-grow">
                     <h3 className="text-xl font-bold text-gray-800">
-                      {car.make} {car.makeModel}{" "}
+                      {String(car.make_id)} {String(car.makeModel)}
                       <span className="text-gray-500 font-medium">
-                        ({car.year})
+                        ({new Date(car.year).getFullYear()})
                       </span>
                     </h3>
                     <div className="flex items-center space-x-2 text-gray-500 mt-1">
@@ -378,7 +352,7 @@ const CarManagement = () => {
                       <div>
                         <GaugeCircle className="w-5 h-5 text-blue-500 mx-auto mb-1" />
                         <p className="text-sm font-bold text-gray-700">
-                          {car.pricePerDay} $
+                          {car.price} $
                         </p>
                         <p className="text-xs text-gray-500">Per Day</p>
                       </div>
@@ -393,7 +367,7 @@ const CarManagement = () => {
 
                   <div className="flex items-center justify-between">
                     <p className="text-2xl font-bold text-gray-800">
-                      €{car.pricePerDay}
+                      €{car.price}
                       <span className="text-sm font-normal text-gray-500">
                         /ditë
                       </span>
@@ -416,182 +390,10 @@ const CarManagement = () => {
 
       {/* Add Car Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-800">
-                Shto Makinë të Re
-              </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-2xl transition-all"
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-            {/* Modal Content */}
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-              <select
-                name="make"
-                value={newCar.make}
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              >
-                <option value="" disabled>
-                  Zgjidh Markën
-                </option>
-                {Object.keys(carBrands).map((make) => (
-                  <option key={make} value={make}>
-                    {make}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                name="makeModel"
-                value={newCar.makeModel}
-                onChange={handleNewCarChange}
-                disabled={!newCar.make}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100"
-              >
-                <option value="" disabled>
-                  Zgjidh Modelin
-                </option>
-                {newCar.make &&
-                  carBrands[newCar.make as keyof typeof carBrands].map(
-                    (model) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    )
-                  )}
-              </select>
-
-              <select
-                name="pickUpLocation"
-                value={newCar.pickUpLocation}
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100"
-              >
-                <option value="" disabled>
-                  Zgjidh Pick up Lokacionin
-                </option>
-
-                {Array.isArray(locations) &&
-                  locations.map((location, idx) => (
-                    <option key={idx} value={location._id}>
-                      {location.city}, {location.address}
-                    </option>
-                  ))}
-              </select>
-
-              <select
-                name="dropOffLocation"
-                value={newCar.dropOffLocation}
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100"
-              >
-                <option value="" disabled>
-                  Zgjidh drop off Lokacionin
-                </option>
-
-                {Array.isArray(locations) &&
-                  locations.map((location, idx) => (
-                    <option key={idx} value={location._id}>
-                      {location.city}, {location.address}
-                    </option>
-                  ))}
-              </select>
-              <input
-                name="year"
-                type="number"
-                value={newCar.year}
-                placeholder="Viti"
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-              <input
-                name="licensePlate"
-                type="text"
-                value={newCar.licensePlate}
-                placeholder="Targa"
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-              <input
-                name="pricePerDay"
-                type="number"
-                value={newCar.pricePerDay}
-                placeholder="Çmimi / Ditë (€)"
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-              <input
-                name="imageUrl"
-                type="text"
-                value={newCar.imageUrl}
-                placeholder="URL e fotos"
-                onChange={handleNewCarChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-
-              {/* Feature Management UI */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tiparet e Makinës
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={currentFeature}
-                    onChange={(e) => setCurrentFeature(e.target.value)}
-                    placeholder="Shto një tipar (p.sh. GPS)"
-                    className="flex-grow px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddFeature}
-                    className="px-4 py-3 bg-blue-100 text-blue-700 rounded-2xl hover:bg-blue-200 transition-colors font-medium"
-                  >
-                    Shto
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {newCar.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center bg-gray-200 text-gray-800 text-sm font-medium px-3 py-1 rounded-full"
-                    >
-                      <span>{feature}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFeature(feature)}
-                        className="ml-2 text-gray-500 hover:text-gray-800"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {/* Modal Actions */}
-            <div className="flex space-x-3 pt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 py-3 border border-gray-200 text-gray-600 rounded-2xl hover:bg-gray-50 transition-all"
-              >
-                Anulo
-              </button>
-              <button
-                onClick={handleSaveCar}
-                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl hover:shadow-lg transition-all"
-              >
-                Ruaj Makinën
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddCar
+          setShowAddModal={setShowAddModal}
+          handleSaveCar={handleSaveCar}
+        />
       )}
     </div>
   );

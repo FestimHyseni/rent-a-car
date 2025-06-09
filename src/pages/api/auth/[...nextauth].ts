@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
           id: (user as { _id: { toString(): string } })._id.toString(),
           name: user.name,
           email: user.email,
-          role: user.role, // Include role in the user object for the session
+          role: user.role ? user.role.toString() : "", // Ensure role is always a string
           image: user.image,
         };
       },
@@ -87,7 +87,7 @@ export const authOptions: NextAuthOptions = {
           await dbConnect();
           const dbUser = await User.findById(user.id);
           if (dbUser) {
-            token.role = dbUser.role;
+            token.role = dbUser.role ? dbUser.role.toString() : "";
           }
         }
         token.id = user.id; // Persist user ID to token

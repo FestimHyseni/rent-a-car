@@ -6,7 +6,7 @@ export interface IUser extends Document {
   password?: string;
   image?: string;
   emailVerified?: Date | null;
-  role: string;
+  role: mongoose.Schema.Types.ObjectId;
   country?: string;
   city?: string;
   number?: string;
@@ -23,9 +23,9 @@ const UserSchema: Schema<IUser> = new Schema(
     image: { type: String },
     emailVerified: { type: Date, default: null },
     role: {
-      type: String,
-      enum: ["user", "admin", "staff"],
-      default: "user",
+      type: mongoose.Schema.Types.ObjectId, // <-- Change type to ObjectId
+      ref: "Role", // <-- Add reference to the 'Role' model
+      required: true,
     },
     country: { type: String },
     city: { type: String },
@@ -35,6 +35,7 @@ const UserSchema: Schema<IUser> = new Schema(
   { timestamps: true }
 );
 
-const User: Model<IUser> = models.User || mongoose.model<IUser>("User", UserSchema);
+const User: Model<IUser> =
+  models.User || mongoose.model<IUser>("User", UserSchema);
 
 export default User;

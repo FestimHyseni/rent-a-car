@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcryptjs";
 import dbConnect from "../../../lib/dbConnect"; // Your Mongoose connection utility
 import User, { IUser } from "../../../models/User"; // Your Mongoose User model
+import Role, { IRole } from "../../../models/Role"; // Your Mongoose User model
 
 type Data = {
   success: boolean;
@@ -23,21 +24,17 @@ export default async function handler(
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Missing required fields: name, email, or password.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Missing required fields: name, email, or password.",
+    });
   }
 
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Password must be at least 6 characters long.",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters long.",
+    });
   }
 
   try {
@@ -45,13 +42,14 @@ export default async function handler(
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: "User with this email already exists.",
-        });
+      return res.status(409).json({
+        success: false,
+        message: "User with this email already exists.",
+      });
     }
+
+    const role = await Role.findOne({ name: "user" });
+    console.log(role);
 
     const hashedPassword = await bcrypt.hash(password, 12); // 12 salt rounds
 
@@ -59,7 +57,7 @@ export default async function handler(
       name,
       email,
       password: hashedPassword,
-      role: "user", // Default role
+      role: role._id, // Default role
     });
 
     await newUser.save();
@@ -72,20 +70,16 @@ export default async function handler(
       role: newUser.role,
     };
 
-    return res
-      .status(201)
-      .json({
-        success: true,
-        message: "User registered successfully!",
-        user: userToReturn,
-      });
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully!",
+      user: userToReturn,
+    });
   } catch (error: any) {
     console.error("Registration Error:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: error.message || "Internal Server Error",
-      });
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
   }
 }
