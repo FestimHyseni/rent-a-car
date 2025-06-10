@@ -1,15 +1,13 @@
-// pages/api/auth/[...nextauth].ts
-import NextAuth, { NextAuthOptions, User as NextAuthUser } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-import clientPromise from "../../../lib/mongodb"; // Utility to connect to MongoDB
-import User, { IUser } from "../../../models/User"; // Your Mongoose User model
-import dbConnect from "../../../lib/dbConnect"; // Mongoose connection utility
+import clientPromise from "../../../lib/mongodb";
+import User from "../../../models/User";
+import dbConnect from "../../../lib/dbConnect";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  // Configure one or more authentication providers
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -25,12 +23,12 @@ export const authOptions: NextAuthOptions = {
         },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter an email and password.");
         }
 
-        await dbConnect(); // Ensure database connection
+        await dbConnect();
 
         const user = await User.findOne({ email: credentials.email }).select(
           "+password"
@@ -40,10 +38,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("No user found with this email.");
         }
 
-        // bcrypt.compare returns a promise
         if (!user.password) {
           throw new Error("User does not have a password set.");
         }
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
@@ -53,68 +51,79 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Incorrect password.");
         }
 
-        // Return user object without password
         return {
-          id: (user as { _id: { toString(): string } })._id.toString(),
+          id: user._id.toString(),
           name: user.name,
           email: user.email,
-          role: user.role ? user.role.toString() : "", // Ensure role is always a string
-          image: user.image,
+          role: user.role || "",
+          image: user.image || "",
+          number: user.number || "",
+          country: user.country || "",
+          city: user.city || "",
+          address: user.address || "",
+          createdAt: user.createdAt?.toISOString() || "",
         };
       },
     }),
   ],
   adapter: MongoDBAdapter(clientPromise),
   session: {
-    strategy: "jwt", // Using JWT for session strategy
+    strategy: "jwt",
   },
   pages: {
-    signIn: "/login", // Redirect to custom login page
-    // error: '/auth/error', // Custom error page
-    // newUser: '/signup' // New users will be directed here after OAuth sign up (optional)
+    signIn: "/login",
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      // Persist the OAuth access_token and user role to the token right after signin
       if (account && user) {
         token.accessToken = account.access_token;
-        // If it's a credentials login, user object from authorize will have role
-        // If it's OAuth, we might need to fetch/assign role from DB
-        if (user.role) {
-          token.role = user.role;
-        } else {
-          // For OAuth, fetch user from DB to get role if not directly in user object
+        token.id = user.id;
+        token.role = user.role || "";
+        token.image = user.image || "";
+        token.number = user.number || "";
+        token.country = user.country || "";
+        token.city = user.city || "";
+        token.address = user.address || "";
+        token.createdAt = user.createdAt || "";
+
+        // If OAuth and user fields missing, fetch from DB
+        if (!user.number || !user.country || !user.city || !user.address) {
           await dbConnect();
-          const dbUser = await User.findById(user.id);
+          const dbUser = await User.findById(user.id).lean();
           if (dbUser) {
-            token.role = dbUser.role ? dbUser.role.toString() : "";
+            token.number = dbUser.number || "";
+            token.country = dbUser.country || "";
+            token.city = dbUser.city || "";
+            token.address = dbUser.address || "";
+            token.image = dbUser.image || "";
+            token.createdAt = dbUser.createdAt?.toISOString() || "";
           }
         }
-        token.id = user.id; // Persist user ID to token
       }
+
       return token;
     },
+
     async session({ session, token }) {
-      // Send properties to the client, like an access_token and user role from JWT
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.image = token.image as string;
+        session.user.number = token.number as string;
+        session.user.country = token.country as string;
+        session.user.city = token.city as string;
+        session.user.address = token.address as string;
+        session.user.createdAt = token.createdAt as string;
+      }
+
       if (token.accessToken) {
         session.accessToken = token.accessToken as string;
       }
-      if (token.role) {
-        session.user.role = token.role as string;
-      }
-      if (token.id && session.user) {
-        session.user.id = token.id as string;
-      }
+
       return session;
     },
-    // If using database sessions (strategy: "database"), this callback populates the session
-    // async session({ session, user }) {
-    //   session.user.role = user.role; // Add role to session
-    //   session.user.id = user.id;
-    //   return session;
-    // }
   },
-  secret: process.env.NEXTAUTH_SECRET, // A secret for signing cookies
+  secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
 };
 

@@ -171,14 +171,14 @@ const Nav = () => {
                   </div>
                   <div className="border-t border-slate-200"></div>
                   <Link
-                    href="/dashboard" // Example: user dashboard
+                    href="/Dashboard" // Example: user dashboard
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     onClick={handleNavLinkClick}
                   >
                     Dashboard
                   </Link>
                   <Link
-                    href="/profile" // Example: user profile page
+                    href="/Profile" // Example: user profile page
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     onClick={handleNavLinkClick}
                   >
