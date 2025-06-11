@@ -59,17 +59,17 @@ const Nav = () => {
         </li>
         <li>
           <Link
-            href="/Vehicles"
+            href="/search"
             className="hover:text-green-400 transition-colors"
             onClick={handleNavLinkClick}
           >
-            Vehicles
+            Search
           </Link>
         </li>
         {/* Assuming Dealers, Shop, Pages are actual routes */}
         <li>
           <Link
-            href="/Dealers"
+            href="/dealers"
             className="hover:text-green-400 transition-colors"
             onClick={handleNavLinkClick}
           >
@@ -78,7 +78,7 @@ const Nav = () => {
         </li>
         <li>
           <Link
-            href="/Shop"
+            href="/shop"
             className="hover:text-green-400 transition-colors"
             onClick={handleNavLinkClick}
           >
@@ -171,14 +171,14 @@ const Nav = () => {
                   </div>
                   <div className="border-t border-slate-200"></div>
                   <Link
-                    href="/Dashboard" // Example: user dashboard
+                    href="/dashboard" // Example: user dashboard
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     onClick={handleNavLinkClick}
                   >
                     Dashboard
                   </Link>
                   <Link
-                    href="/Profile" // Example: user profile page
+                    href="/profile" // Example: user profile page
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     onClick={handleNavLinkClick}
                   >

@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useMemo } from "react";
+import React, { useState, ReactNode, useMemo, useEffect } from "react";
 import {
   Search,
   CalendarDays,
@@ -13,32 +13,21 @@ import {
   Star,
 } from "lucide-react";
 
-// Type Definitions
+import useFetch from "@/hooks/useFetch";
 
 interface CarSpec {
   icon: ReactNode;
   label: string;
 }
 
-type VehicleClass = "Economic" | "Middle Class" | "Top Grade" | "Luxury";
-type VehicleType = "Sedan" | "Hatchback" | "Stationwagon" | "SUV" | "VAN";
 type GearTypeLabel = "Automatic" | "Manual";
-type FuelTypeLabel =
-  | "Diesel"
-  | "Gasoline"
-  | "Hybrid"
-  | "Electrical"
-  | "Autogas";
-type PersonsLabel =
-  | "2 Persons"
-  | "3 Persons"
-  | "4 Persons"
-  | "5 Persons"
-  | "7 Persons"
-  | "7+ Persons";
+// Extended to include API variations
+type FuelTypeLabel = "Electric" | "Hydrogen" | "Diesel" | "Petrol" | "Hybrid";
+// Flexible to handle any number of persons from the API
+type PersonsLabel = string;
 
 interface CarType {
-  id: number;
+  id: string; // Changed from number to string for MongoDB _id
   name: string;
   image: string;
   specs: CarSpec[];
@@ -49,14 +38,12 @@ interface CarType {
   pickupDate: string;
   dropoffDate: string;
   location: string;
-  rating: number;
-  reviews: number;
-  vehicleClass: VehicleClass;
-  vehicleType: VehicleType;
-  // Derived properties for easier filtering
+  rating: number | null; // Made nullable
+  reviews: number | null; // Made nullable
   gearTypeLabel: GearTypeLabel;
   fuelTypeLabel: FuelTypeLabel;
   personsLabel: PersonsLabel;
+  modelYear: number; // Added for sorting
 }
 
 interface FilterOptionItem {
@@ -65,284 +52,52 @@ interface FilterOptionItem {
 }
 
 interface FilterOptions {
-  vehicleClass: FilterOptionItem[];
-  vehicleType: FilterOptionItem[];
   gearType: FilterOptionItem[];
   fuelType: FilterOptionItem[];
   persons: FilterOptionItem[];
 }
 
 interface ActiveFilters {
-  vehicleClass: VehicleClass[];
-  vehicleType: VehicleType[];
   gearType: GearTypeLabel[];
   fuelType: FuelTypeLabel[];
   persons: PersonsLabel[];
 }
 
-type SortKey = "name" | "discountedPrice" | "rating" | "modelYear"; // modelYear is a placeholder
+type SortKey = "name" | "discountedPrice" | "rating" | "modelYear";
 type SortDirection = "asc" | "desc";
 
 interface SortConfig {
   key: SortKey;
   direction: SortDirection;
 }
-
-// Helper function to extract spec labels for filtering
-const getSpecLabel = (
-  specs: CarSpec[],
-  type:
-    | "Automatic"
-    | "Manual"
-    | "Diesel"
-    | "Gasoline"
-    | "Hybrid"
-    | "Electrical"
-    | "Autogas"
-    | "Persons"
-): string | undefined => {
-  if (type === "Automatic" || type === "Manual") {
-    return specs.find(
-      (spec) => spec.label === "Automatic" || spec.label === "Manual"
-    )?.label;
-  }
-  if (
-    ["Diesel", "Gasoline", "Hybrid", "Electrical", "Autogas"].includes(type)
-  ) {
-    return specs.find((spec) =>
-      ["Diesel", "Gasoline", "Hybrid", "Electrical", "Autogas"].includes(
-        spec.label
-      )
-    )?.label;
-  }
-  if (type === "Persons") {
-    return specs.find((spec) => spec.label.includes("Persons"))?.label;
-  }
-  return undefined;
-};
-
-// Mock Data for Cars
-const mockCarsData: Omit<
-  CarType,
-  "gearTypeLabel" | "fuelTypeLabel" | "personsLabel"
->[] = [
-  {
-    id: 1,
-    name: "Volvo XC90",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=Volvo+XC90",
-    specs: [
-      { icon: <Fuel className="w-4 h-4 text-gray-500" />, label: "Diesel" },
-      {
-        icon: <Settings className="w-4 h-4 text-gray-500" />,
-        label: "Automatic",
-      },
-      {
-        icon: <Gauge className="w-4 h-4 text-gray-500" />,
-        label: "6.5L/100km",
-      },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "5 Persons" },
-    ],
-    originalPrice: 406,
-    discountedPrice: 324.95,
-    dailyPrice: 64.99,
-    discount: "25% OFF",
-    pickupDate: "30.10.2024 08:00 PM",
-    dropoffDate: "03.11.2024 08:00 PM",
-    location: "Airport XYZ",
-    rating: 4.5,
-    reviews: 120,
-    vehicleClass: "Luxury",
-    vehicleType: "SUV",
-  },
-  {
-    id: 2,
-    name: "Audi A7 Sportback",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=Audi+A7",
-    specs: [
-      { icon: <Fuel className="w-4 h-4 text-gray-500" />, label: "Gasoline" },
-      {
-        icon: <Settings className="w-4 h-4 text-gray-500" />,
-        label: "Automatic",
-      },
-      {
-        icon: <Gauge className="w-4 h-4 text-gray-500" />,
-        label: "7.2L/100km",
-      },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "4 Persons" },
-    ],
-    originalPrice: null,
-    discountedPrice: 263.0,
-    dailyPrice: 52.6,
-    discount: null,
-    pickupDate: "30.10.2024 09:00 PM",
-    dropoffDate: "03.11.2024 09:00 PM",
-    location: "Downtown Central",
-    rating: 4.8,
-    reviews: 95,
-    vehicleClass: "Top Grade",
-    vehicleType: "Sedan",
-  },
-  {
-    id: 3,
-    name: "Volkswagen Transporter",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=VW+Transporter",
-    specs: [
-      { icon: <Fuel className="w-4 h-4 text-gray-500" />, label: "Diesel" },
-      { icon: <Settings className="w-4 h-4 text-gray-500" />, label: "Manual" },
-      {
-        icon: <Gauge className="w-4 h-4 text-gray-500" />,
-        label: "8.0L/100km",
-      },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "7 Persons" },
-    ],
-    originalPrice: null,
-    discountedPrice: 374.0,
-    dailyPrice: 74.8,
-    discount: null,
-    pickupDate: "31.10.2024 10:00 AM",
-    dropoffDate: "04.11.2024 10:00 AM",
-    location: "North Station",
-    rating: 4.2,
-    reviews: 78,
-    vehicleClass: "Middle Class",
-    vehicleType: "VAN",
-  },
-  {
-    id: 4,
-    name: "Mercedes E-Class",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=Mercedes+E-Class",
-    specs: [
-      { icon: <Zap className="w-4 h-4 text-gray-500" />, label: "Electrical" },
-      {
-        icon: <Settings className="w-4 h-4 text-gray-500" />,
-        label: "Automatic",
-      },
-      { icon: <Gauge className="w-4 h-4 text-gray-500" />, label: "N/A" },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "5 Persons" },
-    ],
-    originalPrice: null,
-    discountedPrice: 247.5,
-    dailyPrice: 49.5,
-    discount: null,
-    pickupDate: "01.11.2024 12:00 PM",
-    dropoffDate: "05.11.2024 12:00 PM",
-    location: "City Center Mall",
-    rating: 4.6,
-    reviews: 150,
-    vehicleClass: "Top Grade",
-    vehicleType: "Sedan",
-  },
-  {
-    id: 5,
-    name: "BMW 3 Series",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=BMW+3+Series",
-    specs: [
-      { icon: <Fuel className="w-4 h-4 text-gray-500" />, label: "Gasoline" },
-      {
-        icon: <Settings className="w-4 h-4 text-gray-500" />,
-        label: "Automatic",
-      },
-      {
-        icon: <Gauge className="w-4 h-4 text-gray-500" />,
-        label: "7.0L/100km",
-      },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "5 Persons" },
-    ],
-    originalPrice: 300,
-    discountedPrice: 280.0,
-    dailyPrice: 56.0,
-    discount: "10% OFF",
-    pickupDate: "02.11.2024 10:00 AM",
-    dropoffDate: "06.11.2024 10:00 AM",
-    location: "Westside Rentals",
-    rating: 4.7,
-    reviews: 110,
-    vehicleClass: "Top Grade",
-    vehicleType: "Sedan",
-  },
-  {
-    id: 6,
-    name: "Ford Focus",
-    image: "https://placehold.co/600x400/E2E8F0/4A5568?text=Ford+Focus",
-    specs: [
-      { icon: <Fuel className="w-4 h-4 text-gray-500" />, label: "Gasoline" },
-      { icon: <Settings className="w-4 h-4 text-gray-500" />, label: "Manual" },
-      {
-        icon: <Gauge className="w-4 h-4 text-gray-500" />,
-        label: "6.0L/100km",
-      },
-      { icon: <Users className="w-4 h-4 text-gray-500" />, label: "5 Persons" },
-    ],
-    originalPrice: null,
-    discountedPrice: 180.0,
-    dailyPrice: 36.0,
-    discount: null,
-    pickupDate: "03.11.2024 11:00 AM",
-    dropoffDate: "07.11.2024 11:00 AM",
-    location: "South Suburbs",
-    rating: 4.1,
-    reviews: 65,
-    vehicleClass: "Economic",
-    vehicleType: "Hatchback",
-  },
-];
-
-const mockCars: CarType[] = mockCarsData.map((car) => ({
-  ...car,
-  gearTypeLabel:
-    (getSpecLabel(car.specs, "Automatic") as GearTypeLabel) ||
-    (getSpecLabel(car.specs, "Manual") as GearTypeLabel),
-  fuelTypeLabel:
-    (getSpecLabel(car.specs, "Diesel") as FuelTypeLabel) ||
-    (getSpecLabel(car.specs, "Gasoline") as FuelTypeLabel) ||
-    (getSpecLabel(car.specs, "Hybrid") as FuelTypeLabel) ||
-    (getSpecLabel(car.specs, "Electrical") as FuelTypeLabel) ||
-    (getSpecLabel(car.specs, "Autogas") as FuelTypeLabel),
-  personsLabel: getSpecLabel(car.specs, "Persons") as PersonsLabel,
-}));
-
-// Filter Data
+// --- Filter Data (Updated) ---
 const filterOptions: FilterOptions = {
-  vehicleClass: [
-    { id: "Economic", label: "Economic" },
-    { id: "Middle Class", label: "Middle Class" },
-    { id: "Top Grade", label: "Top Grade" },
-    { id: "Luxury", label: "Luxury" },
-  ],
-  vehicleType: [
-    { id: "Sedan", label: "Sedan" },
-    { id: "Hatchback", label: "Hatchback" },
-    { id: "Stationwagon", label: "Stationwagon" },
-    { id: "SUV", label: "SUV" },
-    { id: "VAN", label: "VAN" },
-  ],
   gearType: [
     { id: "Automatic", label: "Automatic" },
     { id: "Manual", label: "Manual" },
   ],
   fuelType: [
+    { id: "Electric", label: "Electric" },
+    { id: "Hydrogen", label: "Hydrogen" },
     { id: "Diesel", label: "Diesel" },
-    { id: "Gasoline", label: "Gasoline" },
-    { id: "Autogas", label: "Autogas" },
+    { id: "Petrol", label: "Petrol" },
     { id: "Hybrid", label: "Hybrid" },
-    { id: "Electrical", label: "Electrical" },
   ],
   persons: [
-    // Assuming these are the exact labels in car.specs
     { id: "2 Persons", label: "2 Persons" },
     { id: "3 Persons", label: "3 Persons" },
     { id: "4 Persons", label: "4 Persons" },
     { id: "5 Persons", label: "5 Persons" },
-    { id: "7 Persons", label: "7 Persons" }, // For "7 Persons"
-    { id: "7+ Persons", label: "7+ Persons" }, // For "7+ Persons"
+    { id: "7 Persons", label: "7 Persons" },
+    { id: "7+ Persons", label: "7+ Persons" },
   ],
 };
 
+// --- Car Card Component (Updated for nullable properties) ---
 interface CarCardProps {
   car: CarType;
 }
 
-// Car Card Component
 const CarCard: React.FC<CarCardProps> = ({ car }) => {
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row mb-6 hover:shadow-xl transition-shadow duration-300">
@@ -367,8 +122,14 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
         <div>
           <h3 className="text-xl font-bold text-gray-800 mb-1">{car.name}</h3>
           <div className="flex items-center text-sm text-gray-500 mb-3">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />{" "}
-            {car.rating} ({car.reviews} reviews)
+            {car.rating && car.reviews ? (
+              <>
+                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
+                {car.rating} ({car.reviews} reviews)
+              </>
+            ) : (
+              <span className="text-xs">No reviews yet</span>
+            )}
             <a href="#" className="text-blue-600 hover:underline ml-2 text-xs">
               View vehicle specifications
             </a>
@@ -395,10 +156,10 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
               </p>
             )}
             <p className="text-2xl font-bold text-blue-600">
-              ${car.discountedPrice.toFixed(2)}
+              ${(car.discountedPrice || 0).toFixed(2)}
             </p>
             <p className="text-xs text-gray-500">
-              ${car.dailyPrice.toFixed(2)}/Daily
+              ${(car.dailyPrice || 0).toFixed(2)}/Daily
             </p>
           </div>
           <button className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 text-sm">
@@ -410,6 +171,7 @@ const CarCard: React.FC<CarCardProps> = ({ car }) => {
   );
 };
 
+// --- Filter Checkbox Component (No changes) ---
 interface FilterCheckboxProps {
   id: string;
   label: string;
@@ -417,7 +179,6 @@ interface FilterCheckboxProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-// Checkbox Component for Filters
 const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   id,
   label,
@@ -439,11 +200,13 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   </label>
 );
 
-// Main Search Page Component
+// --- Main Search Page Component (Refactored) ---
 export default function CarSearchPage() {
+  const [cars, setCars] = useState<CarType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
-    vehicleClass: [],
-    vehicleType: [],
     gearType: [],
     fuelType: [],
     persons: [],
@@ -455,11 +218,79 @@ export default function CarSearchPage() {
   });
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
+  // Use the useFetch hook to fetch car data
+  const {
+    data: apiData,
+    loading: fetchLoading,
+    error: fetchError,
+  } = useFetch("/api/cars");
+
+  useEffect(() => {
+    if (fetchLoading) {
+      setLoading(true);
+      return;
+    }
+    if (fetchError) {
+      setError(fetchError.message);
+      setLoading(false);
+      return;
+    }
+    if (apiData && Array.isArray(apiData)) {
+      // Transform API data into CarType format
+      const transformedCars: CarType[] = apiData.map((car: any) => {
+        const gearTypeLabel = car.transmission as GearTypeLabel;
+        const fuelTypeLabel = car.fuelType as FuelTypeLabel;
+        const personsLabel = `${car.seats} Persons` as PersonsLabel;
+
+        const getFuelIcon = (fuel: FuelTypeLabel) => {
+          if (["Electrical", "Electric", "Hybrid"].includes(fuel)) {
+            return <Zap className="w-4 h-4 text-gray-500" />;
+          }
+          return <Fuel className="w-4 h-4 text-gray-500" />;
+        };
+
+        const specs: CarSpec[] = [
+          { icon: getFuelIcon(fuelTypeLabel), label: fuelTypeLabel },
+          {
+            icon: <Settings className="w-4 h-4 text-gray-500" />,
+            label: gearTypeLabel,
+          },
+          {
+            icon: <Users className="w-4 h-4 text-gray-500" />,
+            label: personsLabel,
+          },
+        ];
+
+        return {
+          id: car._id,
+          name: `${car.make_id} ${car.makeModel}`,
+          image: car.imageUrl,
+          specs,
+          originalPrice: null, // Not in API
+          discountedPrice: car.price || 0,
+          dailyPrice: (car.price || 0) / 5, // Assuming 5 days rental for calculation
+          discount: null, // Not in API
+          pickupDate: "Date from search", // Placeholder
+          dropoffDate: "Date from search", // Placeholder
+          location: car.pickUpLocation,
+          rating: car.rating || null, // Not in API, defaulting to null
+          reviews: car.reviews || null, // Not in API, defaulting to null
+          gearTypeLabel,
+          fuelTypeLabel,
+          personsLabel,
+          modelYear: car.year,
+        };
+      });
+      setCars(transformedCars);
+      setError(null);
+      setLoading(false);
+    }
+  }, [apiData, fetchLoading, fetchError]);
+
   const handleFilterChange = (category: keyof ActiveFilters, value: string) => {
     setActiveFilters((prev) => {
-      const currentCategoryFilters = prev[category] as string[]; // Type assertion
-      const typedValue = value as any; // Allow string for value, types will match category
-
+      const currentCategoryFilters = prev[category] as string[];
+      const typedValue = value as any;
       if (currentCategoryFilters.includes(typedValue)) {
         return {
           ...prev,
@@ -477,7 +308,6 @@ export default function CarSearchPage() {
     const value = event.target.value;
     let key: SortKey = "name";
     let direction: SortDirection = "asc";
-
     if (value.includes("_desc")) {
       direction = "desc";
       key = value.replace("_desc", "") as SortKey;
@@ -488,25 +318,15 @@ export default function CarSearchPage() {
   };
 
   const processedCars = useMemo(() => {
-    let carsToDisplay = [...mockCars];
+    let carsToDisplay = [...cars];
 
     // Filtering
     carsToDisplay = carsToDisplay.filter((car) => {
       return (Object.keys(activeFilters) as Array<keyof ActiveFilters>).every(
         (categoryKey) => {
-          const selectedOptions = activeFilters[categoryKey] as (
-            | string
-            | number
-          )[];
-          if (selectedOptions.length === 0) {
-            return true; // No filter for this category, so car passes
-          }
-
+          const selectedOptions = activeFilters[categoryKey] as string[];
+          if (selectedOptions.length === 0) return true;
           switch (categoryKey) {
-            case "vehicleClass":
-              return selectedOptions.includes(car.vehicleClass);
-            case "vehicleType":
-              return selectedOptions.includes(car.vehicleType);
             case "gearType":
               return selectedOptions.includes(car.gearTypeLabel);
             case "fuelType":
@@ -525,38 +345,37 @@ export default function CarSearchPage() {
       carsToDisplay.sort((a, b) => {
         let valA: string | number = "";
         let valB: string | number = "";
-
-        if (sortConfig.key === "name") {
-          valA = a.name.toLowerCase();
-          valB = b.name.toLowerCase();
-        } else if (sortConfig.key === "discountedPrice") {
-          valA = a.discountedPrice ?? 0;
-          valB = b.discountedPrice ?? 0;
-        } else if (sortConfig.key === "rating") {
-          valA = a.rating ?? 0;
-          valB = b.rating ?? 0;
-        } else {
-          // fallback for unknown keys (should not happen)
-          valA = "";
-          valB = "";
+        switch (sortConfig.key) {
+          case "name":
+            valA = a.name.toLowerCase();
+            valB = b.name.toLowerCase();
+            break;
+          case "discountedPrice":
+            valA = a.discountedPrice ?? 0;
+            valB = b.discountedPrice ?? 0;
+            break;
+          case "rating":
+            valA = a.rating ?? 0;
+            valB = b.rating ?? 0;
+            break;
+          case "modelYear":
+            valA = a.modelYear ?? 0;
+            valB = b.modelYear ?? 0;
+            break;
+          default:
+            break;
         }
-
-        if (valA < valB) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
+        if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
     }
     return carsToDisplay;
-  }, [activeFilters, sortConfig]);
+  }, [cars, activeFilters, sortConfig]);
 
   return (
     <div className="bg-gray-50 min-h-screen text-black">
-      {/* <SiteHeader /> */}{" "}
-      {/* Assuming SiteHeader is defined elsewhere or not needed for this snippet */}
+      {/* <SiteHeader /> */}
       <div className="container mx-auto px-4 pt-8 pb-4">
         <div className="text-sm text-gray-500 mb-2">
           <a href="#" className="hover:text-blue-600">
@@ -591,8 +410,8 @@ export default function CarSearchPage() {
               <option value="discountedPrice_desc">Price: High to Low</option>
               <option value="rating_desc">Rating: High to Low</option>
               <option value="rating">Rating: Low to High</option>
-              {/* <option value="modelYear_desc">Model Year: Newest</option> */}
-              {/* <option value="modelYear">Model Year: Oldest</option> */}
+              <option value="modelYear_desc">Model Year: Newest</option>
+              <option value="modelYear">Model Year: Oldest</option>
             </select>
           </div>
           <div className="flex items-center space-x-1">
@@ -624,41 +443,38 @@ export default function CarSearchPage() {
       </div>
       <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
         <div className="lg:w-3/4">
-          {processedCars.length > 0 ? (
-            processedCars.map((car) => <CarCard key={car.id} car={car} />)
-          ) : (
-            <div className="bg-white p-8 rounded-lg shadow text-center text-gray-500">
-              <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-xl font-semibold mb-2">
-                No cars match your criteria
-              </h3>
-              <p>
-                Try adjusting your filters or searching for a different
-                location/date.
-              </p>
+          {loading && <div className="text-center p-8">Loading cars...</div>}
+          {error && (
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative"
+              role="alert"
+            >
+              <strong className="font-bold">Error:</strong>
+              <span className="block sm:inline"> {error}</span>
             </div>
           )}
-          {/* Pagination (Placeholder - would need more logic for filtered/sorted list) */}
-          <div className="mt-8 flex justify-center items-center space-x-2">
-            <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 text-sm">
-              Previous
-            </button>
-            {[1, 2, 3].map((num) => (
-              <button
-                key={num}
-                className={`px-4 py-2 border rounded-md text-sm ${
-                  num === 1
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-gray-300 text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {num}
-              </button>
-            ))}
-            <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100 text-sm">
-              Next
-            </button>
-          </div>
+          {!loading && !error && (
+            <>
+              {processedCars.length > 0 ? (
+                processedCars.map((car) => <CarCard key={car.id} car={car} />)
+              ) : (
+                <div className="bg-white p-8 rounded-lg shadow text-center text-gray-500">
+                  <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-xl font-semibold mb-2">
+                    No cars match your criteria
+                  </h3>
+                  <p>
+                    Try adjusting your filters or searching for a different
+                    location/date.
+                  </p>
+                </div>
+              )}
+              {/* Pagination (Placeholder) */}
+              <div className="mt-8 flex justify-center items-center space-x-2">
+                {/* ... pagination buttons ... */}
+              </div>
+            </>
+          )}
         </div>
 
         <aside className="lg:w-1/4 space-y-6">
@@ -669,14 +485,14 @@ export default function CarSearchPage() {
             </h3>
             <div className="space-y-3 text-sm">
               <div>
-                <p className="font-medium text-gray-700">Pick-up:</p>
-                <p className="text-gray-600">{mockCars[0].pickupDate}</p>
-                <p className="text-gray-500 text-xs">{mockCars[0].location}</p>
+                <p className="font-medium text-gray-700">Pick-up (Example):</p>
+                <p className="text-gray-600">30.10.2024 08:00 PM</p>
+                <p className="text-gray-500 text-xs">Airport XYZ</p>
               </div>
               <div>
-                <p className="font-medium text-gray-700">Drop-off:</p>
-                <p className="text-gray-600">{mockCars[0].dropoffDate}</p>
-                <p className="text-gray-500 text-xs">{mockCars[0].location}</p>
+                <p className="font-medium text-gray-700">Drop-off (Example):</p>
+                <p className="text-gray-600">03.11.2024 08:00 PM</p>
+                <p className="text-gray-500 text-xs">Airport XYZ</p>
               </div>
               <button className="w-full mt-3 bg-orange-500 text-white py-2.5 rounded-lg hover:bg-orange-600 text-sm font-semibold">
                 Change Search
@@ -696,7 +512,7 @@ export default function CarSearchPage() {
                   <h4 className="font-semibold text-gray-700 mb-2 capitalize text-sm">
                     {categoryKey
                       .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}{" "}
+                      .replace(/^./, (str) => str.toUpperCase())}
                   </h4>
                   <div className="space-y-1.5">
                     {filterOptions[categoryKey].map((option) => (
@@ -716,15 +532,9 @@ export default function CarSearchPage() {
                 </div>
               )
             )}
-            {/* Apply Filters button is not strictly necessary with dynamic updates, but kept for consistency if desired */}
-            {/* <button className="w-full mt-4 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 text-sm font-semibold">
-              Apply Filters 
-            </button> */}
             <button
               onClick={() =>
                 setActiveFilters({
-                  vehicleClass: [],
-                  vehicleType: [],
                   gearType: [],
                   fuelType: [],
                   persons: [],

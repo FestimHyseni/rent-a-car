@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
 import {
-  UserCircle,
-  Mail,
   Phone,
   MapPin,
   Globe,
@@ -12,70 +9,316 @@ import {
   X,
   Shield,
   Calendar,
-  Camera
+  Camera,
+  UserCircle,
+  Mail,
 } from "lucide-react";
+import { useRouter } from "next/router";
+
+// Extend the session user type to include additional fields
+type ExtendedUser = {
+  id: string;
+  role: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  number?: string | null;
+  country?: string | null;
+  city?: string | null;
+  address?: string | null;
+  createdAt?: string | null;
+};
+
+// A list of countries for the dropdown
+const countries = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo, Democratic Republic of the",
+  "Congo, Republic of the",
+  "Costa Rica",
+  "Cote d'Ivoire",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Kosovo",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Korea",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine State",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "Sao Tome and Principe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Korea",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States of America",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
+];
 
 const ProfilePage = () => {
   const { data: session, status, update } = useSession();
   const router = useRouter();
+
+  const user = session?.user as ExtendedUser | undefined;
+  const [role, setRole] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  
-  const [formData, setFormData] = useState({
+
+  useEffect(() => {}, [user]);
+
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    number: string;
+    country: string;
+    city: string;
+    address: string;
+    image: string;
+  }>({
     name: "",
     email: "",
     number: "",
     country: "",
     city: "",
     address: "",
-    image: ""
+    image: "",
   });
-
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
 
   // Load user data when session is available
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       setFormData({
-        name: session.user.name || "",
-        email: session.user.email || "",
-        number: session.user.number || "",
-        country: session.user.country || "",
-        city: session.user.city || "",
-        address: session.user.address || "",
-        image: session.user.image || ""
+        name: user.name || "",
+        email: user.email || "",
+        number: user.number || "",
+        country: user.country || "",
+        city: user.city || "",
+        address: user.address || "",
+        image: user.image || "",
       });
+      const fetchUserRole = async () => {
+        if (user?.role) {
+          try {
+            const fetchRole = await fetch(`/api/roles/${user.role}`);
+            const data = await fetchRole.json();
+            console.log(data);
+
+            setRole(data.name);
+          } catch (error) {
+            setRole(user.role);
+          }
+        }
+      };
+      fetchUserRole();
     }
-  }, [session]);
+  }, [user]);
 
   // Handle input changes
-  const handleInputChange = (e) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch("/api/user/update", {
+      if (!user) {
+        setMessage({ type: "error", text: "Nuk u gjet përdoruesi." });
+        setLoading(false);
+        return;
+      }
+      const response = await fetch("/api/users", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ id: user.id, ...formData }),
       });
 
       const data = await response.json();
@@ -86,14 +329,20 @@ const ProfilePage = () => {
           ...session,
           user: {
             ...session?.user,
-            ...formData
-          }
+            ...formData,
+          },
         });
-        
-        setMessage({ type: "success", text: "Profili u përditësua me sukses!" });
+
+        setMessage({
+          type: "success",
+          text: "Profili u përditësua me sukses!",
+        });
         setIsEditing(false);
       } else {
-        setMessage({ type: "error", text: data.message || "Gabim gjatë përditësimit" });
+        setMessage({
+          type: "error",
+          text: data.message || "Gabim gjatë përditësimit",
+        });
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -104,17 +353,18 @@ const ProfilePage = () => {
   };
 
   // Handle image upload
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
 
     // Create FormData for file upload
     const uploadData = new FormData();
-    uploadData.append('image', file);
+    uploadData.append("image", file);
 
     try {
       setLoading(true);
-      const response = await fetch("/api/user/upload-image", {
+      const response = await fetch("/user/upload-image", {
         method: "POST",
         body: uploadData,
       });
@@ -122,13 +372,16 @@ const ProfilePage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          image: data.imageUrl
+          image: data.imageUrl,
         }));
         setMessage({ type: "success", text: "Fotoja u ngarkua me sukses!" });
       } else {
-        setMessage({ type: "error", text: data.message || "Gabim gjatë ngarkimit të fotos" });
+        setMessage({
+          type: "error",
+          text: data.message || "Gabim gjatë ngarkimit të fotos",
+        });
       }
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -162,16 +415,20 @@ const ProfilePage = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Profili Im</h1>
-          <p className="text-slate-400">Menaxhoni informacionet tuaja personale</p>
+          <p className="text-slate-400">
+            Menaxhoni informacionet tuaja personale
+          </p>
         </div>
 
         {/* Message */}
         {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.type === 'success' 
-              ? 'bg-green-900/50 border border-green-500/50 text-green-300' 
-              : 'bg-red-900/50 border border-red-500/50 text-red-300'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success"
+                ? "bg-green-900/50 border border-green-500/50 text-green-300"
+                : "bg-red-900/50 border border-red-500/50 text-red-300"
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -194,38 +451,34 @@ const ProfilePage = () => {
                       <UserCircle size={40} className="text-slate-400" />
                     </div>
                   )}
-                  
+
                   {isEditing && (
                     <label className="absolute bottom-0 right-0 bg-green-500 hover:bg-green-600 p-2 rounded-full cursor-pointer transition-colors">
                       <Camera size={16} className="text-white" />
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageUpload}
                         className="hidden"
+                        onChange={handleImageUpload}
+                        disabled={loading}
                       />
                     </label>
                   )}
                 </div>
-
-                <h2 className="text-xl font-semibold text-white mb-1">
-                  {formData.name || "Përdorues"}
-                </h2>
-                <p className="text-slate-400 text-sm mb-4">{formData.email}</p>
-                
-                {/* Role Badge */}
-                <div className="inline-flex items-center gap-1 bg-green-900/50 text-green-300 px-3 py-1 rounded-full text-sm">
-                  <Shield size={14} />
-                  {session.user.role === 'admin' ? 'Administrator' : 'Përdorues'}
-                </div>
-
-                {/* Created Date */}
-                {session.user.createdAt && (
-                  <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-sm">
-                    <Calendar size={14} />
-                    Anëtar që nga {new Date(session.user.createdAt).toLocaleDateString('sq-AL')}
+                <div className="mt-4 flex flex-col items-center">
+                  <div className="inline-flex items-center gap-1 bg-green-900/50 text-green-300 px-3 py-1 rounded-full text-sm">
+                    <Shield size={14} />
+                    {role === "admin" ? "Administrator" : "Përdorues"}
                   </div>
-                )}
+                  {/* Created Date */}
+                  {user?.createdAt && (
+                    <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-sm">
+                      <Calendar size={14} />
+                      Anëtar që nga{" "}
+                      {new Date(user.createdAt).toLocaleDateString("sq-AL")}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -234,33 +487,35 @@ const ProfilePage = () => {
           <div className="lg:col-span-2">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50 shadow-xl">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-white">Informacione Personale</h3>
+                <h3 className="text-xl font-semibold text-white">
+                  Informacione Personale
+                </h3>
                 <button
                   onClick={() => {
-                    if (isEditing) {
+                    if (isEditing && user) {
                       // Reset form data if canceling edit
                       setFormData({
-                        name: session.user.name || "",
-                        email: session.user.email || "",
-                        number: session.user.number || "",
-                        country: session.user.country || "",
-                        city: session.user.city || "",
-                        address: session.user.address || "",
-                        image: session.user.image || ""
+                        name: user.name || "",
+                        email: user.email || "",
+                        number: user.number || "",
+                        country: user.country || "",
+                        city: user.city || "",
+                        address: user.address || "",
+                        image: user.image || "",
                       });
                       setMessage({ type: "", text: "" });
                     }
                     setIsEditing(!isEditing);
                   }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isEditing 
-                      ? 'bg-slate-600 hover:bg-slate-700 text-white' 
-                      : 'bg-green-500 hover:bg-green-600 text-white'
+                    isEditing
+                      ? "bg-slate-600 hover:bg-slate-700 text-white"
+                      : "bg-green-500 hover:bg-green-600 text-white"
                   }`}
                   disabled={loading}
                 >
                   {isEditing ? <X size={16} /> : <Edit size={16} />}
-                  {isEditing ? 'Anulo' : 'Ndrysho'}
+                  {isEditing ? "Anulo" : "Ndrysho"}
                 </button>
               </div>
 
@@ -272,7 +527,10 @@ const ProfilePage = () => {
                       Emri i plotë
                     </label>
                     <div className="relative">
-                      <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                      <UserCircle
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        size={18}
+                      />
                       <input
                         type="text"
                         name="name"
@@ -280,9 +538,9 @@ const ProfilePage = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                          isEditing 
-                            ? 'border-slate-600 hover:border-slate-500' 
-                            : 'border-slate-700 cursor-not-allowed'
+                          isEditing
+                            ? "border-slate-600 hover:border-slate-500"
+                            : "border-slate-700 cursor-not-allowed"
                         }`}
                         placeholder="Shkruani emrin tuaj"
                       />
@@ -295,7 +553,10 @@ const ProfilePage = () => {
                       Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                      <Mail
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        size={18}
+                      />
                       <input
                         type="email"
                         name="email"
@@ -313,7 +574,10 @@ const ProfilePage = () => {
                       Numri i telefonit
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                      <Phone
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        size={18}
+                      />
                       <input
                         type="tel"
                         name="number"
@@ -321,9 +585,9 @@ const ProfilePage = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                          isEditing 
-                            ? 'border-slate-600 hover:border-slate-500' 
-                            : 'border-slate-700 cursor-not-allowed'
+                          isEditing
+                            ? "border-slate-600 hover:border-slate-500"
+                            : "border-slate-700 cursor-not-allowed"
                         }`}
                         placeholder="Numri i telefonit"
                       />
@@ -336,20 +600,32 @@ const ProfilePage = () => {
                       Shteti
                     </label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                      <input
-                        type="text"
+                      <Globe
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        size={18}
+                      />
+                      <select
                         name="country"
-                        value={formData.country}
+                        value={
+                          isEditing ? formData.country : user?.country ?? ""
+                        }
                         onChange={handleInputChange}
                         disabled={!isEditing}
-                        className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                          isEditing 
-                            ? 'border-slate-600 hover:border-slate-500' 
-                            : 'border-slate-700 cursor-not-allowed'
+                        className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none ${
+                          isEditing
+                            ? "border-slate-600 hover:border-slate-500"
+                            : "border-slate-700 cursor-not-allowed"
                         }`}
-                        placeholder="Shteti"
-                      />
+                      >
+                        <option value="" disabled>
+                          Zgjidhni shtetin
+                        </option>
+                        {countries.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -359,7 +635,10 @@ const ProfilePage = () => {
                       Qyteti
                     </label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+                      <MapPin
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        size={18}
+                      />
                       <input
                         type="text"
                         name="city"
@@ -367,9 +646,9 @@ const ProfilePage = () => {
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                          isEditing 
-                            ? 'border-slate-600 hover:border-slate-500' 
-                            : 'border-slate-700 cursor-not-allowed'
+                          isEditing
+                            ? "border-slate-600 hover:border-slate-500"
+                            : "border-slate-700 cursor-not-allowed"
                         }`}
                         placeholder="Qyteti"
                       />
@@ -382,7 +661,10 @@ const ProfilePage = () => {
                       Adresa
                     </label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-3 text-slate-400" size={18} />
+                      <MapPin
+                        className="absolute left-3 top-3 text-slate-400"
+                        size={18}
+                      />
                       <textarea
                         name="address"
                         value={formData.address}
@@ -390,9 +672,9 @@ const ProfilePage = () => {
                         disabled={!isEditing}
                         rows={3}
                         className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none ${
-                          isEditing 
-                            ? 'border-slate-600 hover:border-slate-500' 
-                            : 'border-slate-700 cursor-not-allowed'
+                          isEditing
+                            ? "border-slate-600 hover:border-slate-500"
+                            : "border-slate-700 cursor-not-allowed"
                         }`}
                         placeholder="Adresa e plotë"
                       />
@@ -413,7 +695,7 @@ const ProfilePage = () => {
                       ) : (
                         <Save size={16} />
                       )}
-                      {loading ? 'Po ruhet...' : 'Ruaj ndryshimet'}
+                      {loading ? "Po ruhet..." : "Ruaj ndryshimet"}
                     </button>
                   </div>
                 )}

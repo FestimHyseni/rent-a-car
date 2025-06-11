@@ -3,6 +3,7 @@ import { BadgeCheck, CalendarDays, MapPin } from "lucide-react";
 import DatePicker from "react-datepicker";
 
 import "react-datepicker/dist/react-datepicker.css"; // Default styles FIRST
+import useFetch from "@/hooks/useFetch";
 
 // Define props for the CustomDatePickerInput
 interface CustomDatePickerInputProps {
@@ -36,9 +37,13 @@ const CustomDatePickerInput = forwardRef<
 CustomDatePickerInput.displayName = "CustomDatePickerInput";
 
 const Hero: React.FC = () => {
-  const [pickUpLocation, setPickUpLocation] = useState<string>("New York, USA");
-  const [dropOffLocation, setDropOffLocation] =
-    useState<string>("Delaware, USA");
+  const { data: locations } = useFetch<any[]>("/api/locations");
+  const [pickUpLocation, setPickUpLocation] = useState<string>(
+    (locations && locations[0]) || ""
+  );
+  const [dropOffLocation, setDropOffLocation] = useState<string>(
+    (locations && locations[0]) || ""
+  );
   const [pickUpDate, setPickUpDate] = useState<Date | null>(null);
   const [returnDate, setReturnDate] = useState<Date | null>(null);
 
@@ -135,37 +140,55 @@ const Hero: React.FC = () => {
               >
                 Pick Up Location
               </label>
-              <div className="flex items-center border border-gray-300 px-3 py-2 rounded-lg bg-white hover:border-gray-400 transition-colors">
+              <div className="flex items-center border border-gray-300 px-3 py-3 h-10 rounded-lg bg-white hover:border-gray-400 transition-colors">
                 <MapPin className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
-                <input
-                  type="text"
-                  id="pickup-location"
+                <select
+                  name="pickUpLocation"
                   value={pickUpLocation}
-                  onChange={handlePickUpLocationChange}
-                  placeholder="City, State or Airport"
+                  onChange={(e) => setPickUpLocation(e.target.value)}
                   className="w-full bg-transparent text-sm text-gray-700 focus:outline-none truncate"
-                />
+                >
+                  <option value="" disabled>
+                    Pick up Lokacioni
+                  </option>
+
+                  {Array.isArray(locations) &&
+                    locations.map((location, idx) => (
+                      <option key={idx} value={location._id}>
+                        {location.city}, {location.address}
+                      </option>
+                    ))}
+                </select>
               </div>
             </div>
 
             {/* Drop Off Location */}
             <div className="lg:col-span-1">
               <label
-                htmlFor="dropoff-location"
+                htmlFor="dropOff-location"
                 className="text-xs font-semibold mb-1 block text-gray-600"
               >
-                Drop Off Location
+                Pick Up Location
               </label>
-              <div className="flex items-center border border-gray-300 px-3 py-2 rounded-lg bg-white hover:border-gray-400 transition-colors">
+              <div className="flex items-center border border-gray-300 px-3 py-2 rounded-lg h-10 bg-white hover:border-gray-400 transition-colors">
                 <MapPin className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
-                <input
-                  type="text"
-                  id="dropoff-location"
+                <select
+                  name="dropOffLocation"
                   value={dropOffLocation}
-                  onChange={handleDropOffLocationChange}
-                  placeholder="City, State or Airport"
+                  onChange={(e) => setDropOffLocation(e.target.value)}
                   className="w-full bg-transparent text-sm text-gray-700 focus:outline-none truncate"
-                />
+                >
+                  <option value="" disabled>
+                    Pick up Lokacioni
+                  </option>
+
+                  {Array.isArray(locations) &&
+                    locations.map((location, idx) => (
+                      <option key={idx} value={location._id}>
+                        {location.city}, {location.address}
+                      </option>
+                    ))}
+                </select>
               </div>
             </div>
 

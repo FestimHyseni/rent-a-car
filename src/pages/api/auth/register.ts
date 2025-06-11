@@ -49,7 +49,6 @@ export default async function handler(
     }
 
     const role = await Role.findOne({ name: "user" });
-    console.log(role);
 
     const hashedPassword = await bcrypt.hash(password, 12); // 12 salt rounds
 
