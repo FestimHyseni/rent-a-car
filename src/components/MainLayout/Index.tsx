@@ -18,7 +18,7 @@ export function MainLayout({ children, name }: Props) {
 
   useEffect(() => {
     setHideHeaderAndNav(
-      pathname.startsWith("/Dashboard") || pathname.startsWith("/client")
+      pathname.startsWith("/dashboard") || pathname.startsWith("/client")
     );
   }, [pathname]);
 

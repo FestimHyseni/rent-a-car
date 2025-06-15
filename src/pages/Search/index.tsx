@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   CalendarDays,
@@ -6,7 +6,6 @@ import {
   Zap,
   Fuel,
   Settings,
-  Gauge,
   Filter,
   List,
   LayoutGrid,
@@ -14,62 +13,20 @@ import {
 } from "lucide-react";
 
 import useFetch from "@/hooks/useFetch";
+import CarCard from "@/components/CarCard/CarCard";
+import {
+  CarType,
+  GearTypeLabel,
+  FuelTypeLabel,
+  PersonsLabel,
+  FilterOptionItem,
+  FilterOptions,
+  ActiveFilters,
+  SortKey,
+  SortDirection,
+  SortConfig,
+} from "@/types/carTypes";
 
-interface CarSpec {
-  icon: ReactNode;
-  label: string;
-}
-
-type GearTypeLabel = "Automatic" | "Manual";
-// Extended to include API variations
-type FuelTypeLabel = "Electric" | "Hydrogen" | "Diesel" | "Petrol" | "Hybrid";
-// Flexible to handle any number of persons from the API
-type PersonsLabel = string;
-
-interface CarType {
-  id: string; // Changed from number to string for MongoDB _id
-  name: string;
-  image: string;
-  specs: CarSpec[];
-  originalPrice: number | null;
-  discountedPrice: number;
-  dailyPrice: number;
-  discount: string | null;
-  pickupDate: string;
-  dropoffDate: string;
-  location: string;
-  rating: number | null; // Made nullable
-  reviews: number | null; // Made nullable
-  gearTypeLabel: GearTypeLabel;
-  fuelTypeLabel: FuelTypeLabel;
-  personsLabel: PersonsLabel;
-  modelYear: number; // Added for sorting
-}
-
-interface FilterOptionItem {
-  id: string;
-  label: string;
-}
-
-interface FilterOptions {
-  gearType: FilterOptionItem[];
-  fuelType: FilterOptionItem[];
-  persons: FilterOptionItem[];
-}
-
-interface ActiveFilters {
-  gearType: GearTypeLabel[];
-  fuelType: FuelTypeLabel[];
-  persons: PersonsLabel[];
-}
-
-type SortKey = "name" | "discountedPrice" | "rating" | "modelYear";
-type SortDirection = "asc" | "desc";
-
-interface SortConfig {
-  key: SortKey;
-  direction: SortDirection;
-}
 // --- Filter Data (Updated) ---
 const filterOptions: FilterOptions = {
   gearType: [
@@ -93,85 +50,7 @@ const filterOptions: FilterOptions = {
   ],
 };
 
-// --- Car Card Component (Updated for nullable properties) ---
-interface CarCardProps {
-  car: CarType;
-}
-
-const CarCard: React.FC<CarCardProps> = ({ car }) => {
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden flex flex-col md:flex-row mb-6 hover:shadow-xl transition-shadow duration-300">
-      <div className="md:w-1/3 relative">
-        <img
-          src={car.image}
-          alt={car.name}
-          className="w-full h-56 md:h-full object-cover"
-          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-            (e.currentTarget.src =
-              "https://placehold.co/600x400/CCCCCC/777777?text=Image+Not+Found")
-          }
-        />
-        {car.discount && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-md">
-            {car.discount}
-          </div>
-        )}
-      </div>
-
-      <div className="md:w-2/3 p-5 flex flex-col justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800 mb-1">{car.name}</h3>
-          <div className="flex items-center text-sm text-gray-500 mb-3">
-            {car.rating && car.reviews ? (
-              <>
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1" />
-                {car.rating} ({car.reviews} reviews)
-              </>
-            ) : (
-              <span className="text-xs">No reviews yet</span>
-            )}
-            <a href="#" className="text-blue-600 hover:underline ml-2 text-xs">
-              View vehicle specifications
-            </a>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-sm text-gray-700 mb-4">
-            {car.specs.map((spec, index) => (
-              <div key={index} className="flex items-center space-x-1.5">
-                {spec.icon}
-                <span>{spec.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mt-4">
-          <div className="mb-3 sm:mb-0">
-            <p className="text-xs text-gray-500">
-              Total {car.originalPrice ? "5 Days" : ""}
-            </p>{" "}
-            {car.originalPrice && (
-              <p className="text-sm text-gray-400 line-through">
-                ${car.originalPrice.toFixed(2)}
-              </p>
-            )}
-            <p className="text-2xl font-bold text-blue-600">
-              ${(car.discountedPrice || 0).toFixed(2)}
-            </p>
-            <p className="text-xs text-gray-500">
-              ${(car.dailyPrice || 0).toFixed(2)}/Daily
-            </p>
-          </div>
-          <button className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 text-sm">
-            Rent Now!
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Filter Checkbox Component (No changes) ---
+// --- Filter Checkbox Component ---
 interface FilterCheckboxProps {
   id: string;
   label: string;
@@ -200,7 +79,7 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   </label>
 );
 
-// --- Main Search Page Component (Refactored) ---
+// --- Main Search Page Component ---
 export default function CarSearchPage() {
   const [cars, setCars] = useState<CarType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -249,7 +128,7 @@ export default function CarSearchPage() {
           return <Fuel className="w-4 h-4 text-gray-500" />;
         };
 
-        const specs: CarSpec[] = [
+        const specs = [
           { icon: getFuelIcon(fuelTypeLabel), label: fuelTypeLabel },
           {
             icon: <Settings className="w-4 h-4 text-gray-500" />,
@@ -399,9 +278,8 @@ export default function CarSearchPage() {
             <span className="text-gray-600">Sort result by:</span>
             <select
               onChange={handleSortChange}
-              value={`${sortConfig.key}${
-                sortConfig.direction === "desc" ? "_desc" : ""
-              }`}
+              value={`${sortConfig.key}${sortConfig.direction === "desc" ? "_desc" : ""
+                }`}
               className="border border-gray-300 rounded-md px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="name">Name (A-Z)</option>
@@ -418,22 +296,20 @@ export default function CarSearchPage() {
             <span className="text-gray-600 mr-1">Change List View:</span>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md ${
-                viewMode === "list"
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-500 hover:bg-gray-100"
-              }`}
+              className={`p-2 rounded-md ${viewMode === "list"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-500 hover:bg-gray-100"
+                }`}
               aria-label="List view"
             >
               <List className="w-5 h-5" />
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md ${
-                viewMode === "grid"
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-500 hover:bg-gray-100"
-              }`}
+              className={`p-2 rounded-md ${viewMode === "grid"
+                ? "bg-blue-100 text-blue-600"
+                : "text-gray-500 hover:bg-gray-100"
+                }`}
               aria-label="Grid view"
             >
               <LayoutGrid className="w-5 h-5" />
