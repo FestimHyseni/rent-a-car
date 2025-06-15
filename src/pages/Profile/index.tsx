@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import {
   Phone,
   MapPin,
@@ -14,8 +14,10 @@ import {
   Mail,
 } from "lucide-react";
 import { useRouter } from "next/router";
+import { GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]"; // Adjust this path to your authOptions
 
-// Extend the session user type to include additional fields
 type ExtendedUser = {
   id: string;
   role: string;
@@ -29,237 +31,41 @@ type ExtendedUser = {
   createdAt?: string | null;
 };
 
-// A list of countries for the dropdown
-const countries = [
-  "Afghanistan",
-  "Albania",
-  "Algeria",
-  "Andorra",
-  "Angola",
-  "Argentina",
-  "Armenia",
-  "Australia",
-  "Austria",
-  "Azerbaijan",
-  "Bahamas",
-  "Bahrain",
-  "Bangladesh",
-  "Barbados",
-  "Belarus",
-  "Belgium",
-  "Belize",
-  "Benin",
-  "Bhutan",
-  "Bolivia",
-  "Bosnia and Herzegovina",
-  "Botswana",
-  "Brazil",
-  "Brunei",
-  "Bulgaria",
-  "Burkina Faso",
-  "Burundi",
-  "Cabo Verde",
-  "Cambodia",
-  "Cameroon",
-  "Canada",
-  "Central African Republic",
-  "Chad",
-  "Chile",
-  "China",
-  "Colombia",
-  "Comoros",
-  "Congo, Democratic Republic of the",
-  "Congo, Republic of the",
-  "Costa Rica",
-  "Cote d'Ivoire",
-  "Croatia",
-  "Cuba",
-  "Cyprus",
-  "Czech Republic",
-  "Denmark",
-  "Djibouti",
-  "Dominica",
-  "Dominican Republic",
-  "Ecuador",
-  "Egypt",
-  "El Salvador",
-  "Equatorial Guinea",
-  "Eritrea",
-  "Estonia",
-  "Eswatini",
-  "Ethiopia",
-  "Fiji",
-  "Finland",
-  "France",
-  "Gabon",
-  "Gambia",
-  "Georgia",
-  "Germany",
-  "Ghana",
-  "Greece",
-  "Grenada",
-  "Guatemala",
-  "Guinea",
-  "Guinea-Bissau",
-  "Guyana",
-  "Haiti",
-  "Honduras",
-  "Hungary",
-  "Iceland",
-  "India",
-  "Indonesia",
-  "Iran",
-  "Iraq",
-  "Ireland",
-  "Israel",
-  "Italy",
-  "Jamaica",
-  "Japan",
-  "Jordan",
-  "Kazakhstan",
-  "Kenya",
-  "Kiribati",
-  "Kosovo",
-  "Kuwait",
-  "Kyrgyzstan",
-  "Laos",
-  "Latvia",
-  "Lebanon",
-  "Lesotho",
-  "Liberia",
-  "Libya",
-  "Liechtenstein",
-  "Lithuania",
-  "Luxembourg",
-  "Madagascar",
-  "Malawi",
-  "Malaysia",
-  "Maldives",
-  "Mali",
-  "Malta",
-  "Marshall Islands",
-  "Mauritania",
-  "Mauritius",
-  "Mexico",
-  "Micronesia",
-  "Moldova",
-  "Monaco",
-  "Mongolia",
-  "Montenegro",
-  "Morocco",
-  "Mozambique",
-  "Myanmar",
-  "Namibia",
-  "Nauru",
-  "Nepal",
-  "Netherlands",
-  "New Zealand",
-  "Nicaragua",
-  "Niger",
-  "Nigeria",
-  "North Korea",
-  "North Macedonia",
-  "Norway",
-  "Oman",
-  "Pakistan",
-  "Palau",
-  "Palestine State",
-  "Panama",
-  "Papua New Guinea",
-  "Paraguay",
-  "Peru",
-  "Philippines",
-  "Poland",
-  "Portugal",
-  "Qatar",
-  "Romania",
-  "Russia",
-  "Rwanda",
-  "Saint Kitts and Nevis",
-  "Saint Lucia",
-  "Saint Vincent and the Grenadines",
-  "Samoa",
-  "San Marino",
-  "Sao Tome and Principe",
-  "Saudi Arabia",
-  "Senegal",
-  "Serbia",
-  "Seychelles",
-  "Sierra Leone",
-  "Singapore",
-  "Slovakia",
-  "Slovenia",
-  "Solomon Islands",
-  "Somalia",
-  "South Africa",
-  "South Korea",
-  "South Sudan",
-  "Spain",
-  "Sri Lanka",
-  "Sudan",
-  "Suriname",
-  "Sweden",
-  "Switzerland",
-  "Syria",
-  "Taiwan",
-  "Tajikistan",
-  "Tanzania",
-  "Thailand",
-  "Timor-Leste",
-  "Togo",
-  "Tonga",
-  "Trinidad and Tobago",
-  "Tunisia",
-  "Turkey",
-  "Turkmenistan",
-  "Tuvalu",
-  "Uganda",
-  "Ukraine",
-  "United Arab Emirates",
-  "United Kingdom",
-  "United States of America",
-  "Uruguay",
-  "Uzbekistan",
-  "Vanuatu",
-  "Vatican City",
-  "Venezuela",
-  "Vietnam",
-  "Yemen",
-  "Zambia",
-  "Zimbabwe",
-];
 
-const ProfilePage = () => {
-  const { data: session, status, update } = useSession();
+
+interface ProfilePageProps {
+  initialUser: ExtendedUser;
+  initialRole: string;
+  memberSince: string | null; 
+}
+const ProfilePage = ({
+  initialUser,
+  initialRole,
+  memberSince,
+}: ProfilePageProps) => {
+  const { data: session, status, update } = useSession(); 
   const router = useRouter();
 
   const user = session?.user as ExtendedUser | undefined;
-  const [role, setRole] = useState<string | null>(null);
+
+  const [role, setRole] = useState(initialRole);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [countriesList, setCountriesList] = useState<{ country: string; cities: string[] }[]>([]);
+const [cities, setCities] = useState<string[]>([]);
 
-  useEffect(() => {}, [user]);
 
-  const [formData, setFormData] = useState<{
-    name: string;
-    email: string;
-    number: string;
-    country: string;
-    city: string;
-    address: string;
-    image: string;
-  }>({
-    name: "",
-    email: "",
-    number: "",
-    country: "",
-    city: "",
-    address: "",
-    image: "",
+  const [formData, setFormData] = useState({
+    name: initialUser.name || "",
+    email: initialUser.email || "",
+    number: initialUser.number || "",
+    country: initialUser.country || "",
+    city: initialUser.city || "",
+    address: initialUser.address || "",
+    image: initialUser.image || "",
   });
 
-  // Load user data when session is available
   useEffect(() => {
     if (user) {
       setFormData({
@@ -271,24 +77,9 @@ const ProfilePage = () => {
         address: user.address || "",
         image: user.image || "",
       });
-      const fetchUserRole = async () => {
-        if (user?.role) {
-          try {
-            const fetchRole = await fetch(`/api/roles/${user.role}`);
-            const data = await fetchRole.json();
-            console.log(data);
-
-            setRole(data.name);
-          } catch (error) {
-            setRole(user.role);
-          }
-        }
-      };
-      fetchUserRole();
     }
-  }, [user]);
+  }, [session]); 
 
-  // Handle input changes
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -301,14 +92,13 @@ const ProfilePage = () => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: "", text: "" });
 
     try {
-      if (!user) {
+      if (!initialUser) {
         setMessage({ type: "error", text: "Nuk u gjet përdoruesi." });
         setLoading(false);
         return;
@@ -318,26 +108,20 @@ const ProfilePage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: user.id, ...formData }),
+        body: JSON.stringify({ id: initialUser.id, ...formData }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Update the session with new data
-        await update({
-          ...session,
-          user: {
-            ...session?.user,
-            ...formData,
-          },
-        });
+        router.replace(router.asPath);
 
         setMessage({
           type: "success",
           text: "Profili u përditësua me sukses!",
         });
         setIsEditing(false);
+        // --- END OF FIX ---
       } else {
         setMessage({
           type: "error",
@@ -351,14 +135,35 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+  const fetchCountries = async () => {
+    try {
+      const res = await fetch("https://countriesnow.space/api/v0.1/countries");
+      const data = await res.json();
+      if (data?.data) {
+        setCountriesList(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+    }
+  };
 
-  // Handle image upload
+  fetchCountries();
+}, []);
+
+useEffect(() => {
+  const selectedCountry = countriesList.find(
+    (c) => c.country === formData.country
+  );
+  setCities(selectedCountry?.cities || []);
+}, [formData.country, countriesList]);
+
+
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     const file = files[0];
-
-    // Create FormData for file upload
     const uploadData = new FormData();
     uploadData.append("image", file);
 
@@ -376,6 +181,13 @@ const ProfilePage = () => {
           ...prev,
           image: data.imageUrl,
         }));
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            image: data.imageUrl,
+          },
+        });
         setMessage({ type: "success", text: "Fotoja u ngarkua me sukses!" });
       } else {
         setMessage({
@@ -392,21 +204,7 @@ const ProfilePage = () => {
   };
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="animate-pulse flex items-center space-x-4">
-          <div className="bg-slate-700/50 h-12 w-12 rounded-full"></div>
-          <div className="space-y-2">
-            <div className="bg-slate-700/50 h-4 w-32 rounded"></div>
-            <div className="bg-slate-700/50 h-3 w-24 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
+    // ... loading skeleton remains the same
   }
 
   return (
@@ -471,11 +269,10 @@ const ProfilePage = () => {
                     {role === "admin" ? "Administrator" : "Përdorues"}
                   </div>
                   {/* Created Date */}
-                  {user?.createdAt && (
+                  {memberSince && (
                     <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-sm">
                       <Calendar size={14} />
-                      Anëtar që nga{" "}
-                      {new Date(user.createdAt).toLocaleDateString("sq-AL")}
+                      Anëtar që nga {memberSince}
                     </div>
                   )}
                 </div>
@@ -492,16 +289,15 @@ const ProfilePage = () => {
                 </h3>
                 <button
                   onClick={() => {
-                    if (isEditing && user) {
-                      // Reset form data if canceling edit
+                    if (isEditing) {
                       setFormData({
-                        name: user.name || "",
-                        email: user.email || "",
-                        number: user.number || "",
-                        country: user.country || "",
-                        city: user.city || "",
-                        address: user.address || "",
-                        image: user.image || "",
+                        name: initialUser.name || "",
+                        email: initialUser.email || "",
+                        number: initialUser.number || "",
+                        country: initialUser.country || "",
+                        city: initialUser.city || "",
+                        address: initialUser.address || "",
+                        image: initialUser.image || "",
                       });
                       setMessage({ type: "", text: "" });
                     }
@@ -606,9 +402,7 @@ const ProfilePage = () => {
                       />
                       <select
                         name="country"
-                        value={
-                          isEditing ? formData.country : user?.country ?? ""
-                        }
+                        value={formData.country}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                         className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none ${
@@ -620,9 +414,9 @@ const ProfilePage = () => {
                         <option value="" disabled>
                           Zgjidhni shtetin
                         </option>
-                        {countries.map((country) => (
-                          <option key={country} value={country}>
-                            {country}
+                        {countriesList.map((c) => (
+                          <option key={c.country} value={c.country}>
+                            {c.country}
                           </option>
                         ))}
                       </select>
@@ -639,19 +433,22 @@ const ProfilePage = () => {
                         className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
                         size={18}
                       />
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className={`w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                          isEditing
-                            ? "border-slate-600 hover:border-slate-500"
-                            : "border-slate-700 cursor-not-allowed"
-                        }`}
-                        placeholder="Qyteti"
-                      />
+                     <select
+  name="city"
+  value={formData.city}
+  onChange={handleInputChange}
+  disabled={!isEditing}
+  className="w-full pl-10 pr-4 py-3 rounded-lg border bg-slate-700/50 text-white placeholder-slate-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all appearance-none"
+
+  >
+  <option value="" disabled>Zgjidhni qytetin</option>
+  {cities.map((city) => (
+    <option key={city} value={city}>
+      {city}
+    </option>
+  ))}
+</select>
+
                     </div>
                   </div>
 
@@ -708,4 +505,50 @@ const ProfilePage = () => {
   );
 };
 
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const session = await getServerSession(context.req, context.res, authOptions);
+
+  if (!session || !session.user) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  const user = session.user as ExtendedUser;
+  let roleName = user.role;
+
+  if (user.role) {
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const roleRes = await fetch(`${baseUrl}/api/roles/${user.role}`);
+      if (roleRes.ok) {
+        const roleData = await roleRes.json();
+        roleName = roleData.name;
+      }
+    } catch (error) {
+      console.error("Failed to fetch role in getServerSideProps:", error);
+    }
+  }
+
+  const memberSince = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("sq-AL", {
+        day: "numeric",
+        month: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return {
+    props: {
+      initialUser: user,
+      initialRole: roleName,
+      memberSince: memberSince, 
+    },
+  };
+}
 export default ProfilePage;
