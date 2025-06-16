@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Search,
   CalendarDays,
@@ -9,25 +9,23 @@ import {
   Filter,
   List,
   LayoutGrid,
-  Star,
 } from "lucide-react";
 
-import useFetch from "@/hooks/useFetch";
 import CarCard from "@/components/CarCard/CarCard";
 import {
   CarType,
   GearTypeLabel,
   FuelTypeLabel,
   PersonsLabel,
-  FilterOptionItem,
   FilterOptions,
   ActiveFilters,
   SortKey,
   SortDirection,
   SortConfig,
 } from "@/types/carTypes";
+import { GetServerSidePropsContext } from "next";
 
-// --- Filter Data (Updated) ---
+// --- Filter Data ---
 const filterOptions: FilterOptions = {
   gearType: [
     { id: "Automatic", label: "Automatic" },
@@ -79,11 +77,18 @@ const FilterCheckbox: React.FC<FilterCheckboxProps> = ({
   </label>
 );
 
-// --- Main Search Page Component ---
-export default function CarSearchPage() {
-  const [cars, setCars] = useState<CarType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+interface CarSearchPageProps {
+  initialCars: CarType[];
+  error?: string | null;
+  brand?: string | null;
+}
+export default function CarSearchPage({
+  initialCars,
+  error: initialError,
+  brand,
+}: CarSearchPageProps) {
+  const [cars, setCars] = useState<CarType[]>(initialCars);
+  const [error, setError] = useState<string | null>(initialError || null);
 
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     gearType: [],
@@ -96,75 +101,6 @@ export default function CarSearchPage() {
     direction: "asc",
   });
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-
-  // Use the useFetch hook to fetch car data
-  const {
-    data: apiData,
-    loading: fetchLoading,
-    error: fetchError,
-  } = useFetch("/api/cars");
-
-  useEffect(() => {
-    if (fetchLoading) {
-      setLoading(true);
-      return;
-    }
-    if (fetchError) {
-      setError(fetchError.message);
-      setLoading(false);
-      return;
-    }
-    if (apiData && Array.isArray(apiData)) {
-      // Transform API data into CarType format
-      const transformedCars: CarType[] = apiData.map((car: any) => {
-        const gearTypeLabel = car.transmission as GearTypeLabel;
-        const fuelTypeLabel = car.fuelType as FuelTypeLabel;
-        const personsLabel = `${car.seats} Persons` as PersonsLabel;
-
-        const getFuelIcon = (fuel: FuelTypeLabel) => {
-          if (["Electrical", "Electric", "Hybrid"].includes(fuel)) {
-            return <Zap className="w-4 h-4 text-gray-500" />;
-          }
-          return <Fuel className="w-4 h-4 text-gray-500" />;
-        };
-
-        const specs = [
-          { icon: getFuelIcon(fuelTypeLabel), label: fuelTypeLabel },
-          {
-            icon: <Settings className="w-4 h-4 text-gray-500" />,
-            label: gearTypeLabel,
-          },
-          {
-            icon: <Users className="w-4 h-4 text-gray-500" />,
-            label: personsLabel,
-          },
-        ];
-
-        return {
-          id: car._id,
-          name: `${car.make_id} ${car.makeModel}`,
-          image: car.imageUrl,
-          specs,
-          originalPrice: null, // Not in API
-          discountedPrice: car.price || 0,
-          dailyPrice: (car.price || 0) / 5, // Assuming 5 days rental for calculation
-          discount: null, // Not in API
-          pickupDate: "Date from search", // Placeholder
-          dropoffDate: "Date from search", // Placeholder
-          location: car.pickUpLocation,
-          rating: car.rating || null, // Not in API, defaulting to null
-          reviews: car.reviews || null, // Not in API, defaulting to null
-          gearTypeLabel,
-          fuelTypeLabel,
-          personsLabel,
-          modelYear: car.year,
-        };
-      });
-      setCars(transformedCars);
-      setError(null);
-      setLoading(false);
-    }
-  }, [apiData, fetchLoading, fetchError]);
 
   const handleFilterChange = (category: keyof ActiveFilters, value: string) => {
     setActiveFilters((prev) => {
@@ -254,7 +190,6 @@ export default function CarSearchPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen text-black">
-      {/* <SiteHeader /> */}
       <div className="container mx-auto px-4 pt-8 pb-4">
         <div className="text-sm text-gray-500 mb-2">
           <a href="#" className="hover:text-blue-600">
@@ -263,6 +198,14 @@ export default function CarSearchPage() {
           &gt; <span className="font-semibold text-blue-600">Choose Car</span>{" "}
           &gt; Personal Informations and Pay
         </div>
+        {brand && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing results for brand:{" "}
+            <span className="font-semibold text-blue-600 capitalize">
+              {brand}
+            </span>
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-gray-800">Search Result</h1>
       </div>
       <div className="container mx-auto px-4 mb-6">
@@ -278,8 +221,9 @@ export default function CarSearchPage() {
             <span className="text-gray-600">Sort result by:</span>
             <select
               onChange={handleSortChange}
-              value={`${sortConfig.key}${sortConfig.direction === "desc" ? "_desc" : ""
-                }`}
+              value={`${sortConfig.key}${
+                sortConfig.direction === "desc" ? "_desc" : ""
+              }`}
               className="border border-gray-300 rounded-md px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="name">Name (A-Z)</option>
@@ -296,20 +240,22 @@ export default function CarSearchPage() {
             <span className="text-gray-600 mr-1">Change List View:</span>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md ${viewMode === "list"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-500 hover:bg-gray-100"
-                }`}
+              className={`p-2 rounded-md ${
+                viewMode === "list"
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-500 hover:bg-gray-100"
+              }`}
               aria-label="List view"
             >
               <List className="w-5 h-5" />
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md ${viewMode === "grid"
-                ? "bg-blue-100 text-blue-600"
-                : "text-gray-500 hover:bg-gray-100"
-                }`}
+              className={`p-2 rounded-md ${
+                viewMode === "grid"
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-500 hover:bg-gray-100"
+              }`}
               aria-label="Grid view"
             >
               <LayoutGrid className="w-5 h-5" />
@@ -319,7 +265,6 @@ export default function CarSearchPage() {
       </div>
       <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8">
         <div className="lg:w-3/4">
-          {loading && <div className="text-center p-8">Loading cars...</div>}
           {error && (
             <div
               className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative"
@@ -329,7 +274,7 @@ export default function CarSearchPage() {
               <span className="block sm:inline"> {error}</span>
             </div>
           )}
-          {!loading && !error && (
+          {!error && (
             <>
               {processedCars.length > 0 ? (
                 processedCars.map((car) => <CarCard key={car.id} car={car} />)
@@ -345,10 +290,7 @@ export default function CarSearchPage() {
                   </p>
                 </div>
               )}
-              {/* Pagination (Placeholder) */}
-              <div className="mt-8 flex justify-center items-center space-x-2">
-                {/* ... pagination buttons ... */}
-              </div>
+              {/* Pagination Placeholder */}
             </>
           )}
         </div>
@@ -360,6 +302,7 @@ export default function CarSearchPage() {
               Booking Information
             </h3>
             <div className="space-y-3 text-sm">
+              {/* Example Content */}
               <div>
                 <p className="font-medium text-gray-700">Pick-up (Example):</p>
                 <p className="text-gray-600">30.10.2024 08:00 PM</p>
@@ -391,7 +334,7 @@ export default function CarSearchPage() {
                       .replace(/^./, (str) => str.toUpperCase())}
                   </h4>
                   <div className="space-y-1.5">
-                    {filterOptions[categoryKey].map((option) => (
+                    {filterOptions[categoryKey]?.map((option) => (
                       <FilterCheckbox
                         key={option.id}
                         id={`${categoryKey}-${option.id}`}
@@ -425,4 +368,86 @@ export default function CarSearchPage() {
       </div>
     </div>
   );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  try {
+    // 1. Get the brand from the URL query, if it exists
+    const { brand } = context.query;
+
+    const res = await fetch(`${process.env.NEXTAUTH_URL}/api/cars`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch cars: ${res.status}`);
+    }
+
+    const apiData = await res.json();
+    let carsToProcess = apiData;
+
+    // 2. If a brand is provided, filter the car list on the server
+    if (brand && typeof brand === "string") {
+      carsToProcess = carsToProcess.filter(
+        (car: any) => car.make && car.make.toLowerCase() === brand.toLowerCase()
+      );
+    }
+
+    // 3. Transform the (now filtered) car list
+    const transformedCars: CarType[] = carsToProcess.map((car: any) => {
+      // All your existing transformation logic remains here...
+      const gearTypeLabel = car.transmission as GearTypeLabel;
+      const fuelTypeLabel = car.fuelType as FuelTypeLabel;
+      const personsLabel = `${car.seats} Persons` as PersonsLabel;
+
+      const getFuelIconName = (fuel: FuelTypeLabel) => {
+        if (["Electrical", "Electric", "Hybrid"].includes(fuel)) return "zap";
+        return "fuel";
+      };
+
+      const specs = [
+        { icon: getFuelIconName(fuelTypeLabel), label: fuelTypeLabel },
+        { icon: "settings", label: gearTypeLabel },
+        { icon: "users", label: personsLabel },
+      ];
+
+      return {
+        id: car._id,
+        make: car.make, // Ensure you have a 'make' or 'make_id' field
+        name: `${car.make} ${car.makeModel}`,
+        image: car.imageUrl,
+        // specs, // Assuming you've fixed the serialization issue
+        originalPrice: car.originalPrice || null,
+        discountedPrice: car.price || 0,
+        dailyPrice: (car.price || 0) / 5,
+        discount: car.discount || null,
+        pickupDate: "Date from search",
+        dropoffDate: "Date from search",
+        location: car.pickUpLocation,
+        pickUpLocation: car.pickUpLocation,
+        dropOffLocation: car.dropOffLocation || "",
+        rating: car.rating || null,
+        reviews: car.reviews || null,
+        // gearTypeLabel,
+        fuelTypeLabel,
+        personsLabel,
+        modelYear: car.year ? new Date(car.year).getFullYear() : null, // Safely get year
+      };
+    });
+
+    return {
+      props: {
+        initialCars: transformedCars,
+        // 4. Pass the brand down as a prop
+        brand: brand || null,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getServerSideProps for CarSearchPage:", error);
+    return {
+      props: {
+        initialCars: [],
+        error: "Could not load car data. Please try again later.",
+        brand: null,
+      },
+    };
+  }
 }

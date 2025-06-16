@@ -1,7 +1,7 @@
 // pages/api/cars/index.ts
-import { BSON, ObjectId } from "mongodb";
 import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
+import { BSON, ObjectId } from "mongodb";
 
 const DB_NAME = "public";
 const COLLECTION_NAME = "contactUs";
@@ -26,8 +26,6 @@ export default async function handler(
       const client = await clientPromise;
       const db = client.db(DB_NAME);
 
-      console.log(req.body);
-
       const result = await db.collection(COLLECTION_NAME).insertOne(req.body);
 
       return res.status(201).json({
@@ -42,7 +40,6 @@ export default async function handler(
   if (req.method === "DELETE") {
     try {
       const id = req.body;
-
 
       if (!id) {
         return res

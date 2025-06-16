@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Car,
   Search,
@@ -24,17 +24,10 @@ import {
   Tag,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import useFetch from "@/hooks/useFetch";
+import useFetch from "@/hooks/useFetch"; // Maintained for postData
 import { ICar } from "@/models/Car";
 import AddCar from "../create/car";
-// const carBrands = {
-//   BMW: ["Series 3", "Series 5", "Series 7", "X3", "X5", "X7"],
-//   "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLE", "GLC"],
-//   Audi: ["A3", "A4", "A6", "A8", "Q5", "Q7", "Q8"],
-//   Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
-//   Ford: ["Fiesta", "Focus", "Mustang", "Explorer"],
-//   Toyota: ["Corolla", "Camry", "RAV4", "Land Cruiser"],
-// };
+
 const categories = [
   "Hatchback",
   "Luxury Car",
@@ -50,32 +43,22 @@ const categories = [
   "Convertible",
 ];
 
-const CarManagement = () => {
-  const { data: fetchedCars, loading, error } = useFetch<ICar[]>("/api/cars");
-  const { data: locations } = useFetch<any[]>("/api/locations");
+interface CarManagementProps {
+  cars: ICar[];
+  locations: any[]; // Replace 'any' with a proper type if available
+}
+
+const CarManagement: React.FC<CarManagementProps> = ({
+  cars: initialCars,
+  locations,
+}) => {
   const { postData } = useFetch("/api/cars");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
-  const locationsMap = useMemo(() => {
-    // If locations haven't loaded, return an empty map
-    if (!locations) return new Map();
+  const [cars, setCars] = useState(initialCars);
 
-    // The new Map() constructor can take an array of [key, value] pairs
-    return new Map(locations.map((loc) => [loc._id, loc]));
-  }, [locations]);
-
-  const cars = useMemo(() => {
-    // Return an empty array if cars or the map aren't ready
-    if (!fetchedCars || locationsMap.size === 0) return [];
-
-    return fetchedCars.map((car) => ({
-      ...car, // Copy all original car properties
-      // Add a new property 'locationDetails' containing the full location object
-      locationDetails: locationsMap.get(car.pickUpLocation),
-    }));
-  }, [fetchedCars, locationsMap]);
   // State for the feature input field
   const [currentFeature, setCurrentFeature] = useState("");
 
@@ -89,31 +72,12 @@ const CarManagement = () => {
     price: 50,
     licensePlate: "",
     imageUrl: "",
-    features: [] as string[], // Initialize features as an empty array
+    features: [] as string[],
   });
 
   const [activeTab, setActiveTab] = useState("cars");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(true);
-
-  type LocalCar = {
-    id?: number;
-    make: string;
-    makeModel: string;
-    category: string;
-    year: number;
-    price: number;
-    location: string;
-    status: "Available" | "Rented" | "Maintenance";
-    rating: number;
-    totalBookings: number;
-    imageUrl: string;
-    licensePlate: string;
-    features: string[];
-    createdAt: Date;
-    updatedAt: Date;
-    _id: string;
-  };
 
   const filteredCars = (cars || []).filter((car) => {
     const carName = car.makeModel
@@ -126,11 +90,9 @@ const CarManagement = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const handleSaveCar = async (newCar: any) => {
+  const handleSaveCar = async (newCarData: any) => {
     try {
-      console.log(newCar);
-
-      const response = await postData(newCar);
+      const response = await postData(newCarData);
       setShowAddModal(false);
       // Reset state after saving
       setNewCar({
@@ -148,7 +110,7 @@ const CarManagement = () => {
       setCurrentFeature(""); // Reset feature input as well
       window.location.reload();
     } catch (error) {
-      console.error("Failed to save client", error);
+      console.error("Failed to save car", error);
     }
   };
 
@@ -337,8 +299,10 @@ const CarManagement = () => {
                     <div className="flex items-center space-x-2 text-gray-500 mt-1">
                       <MapPin className="w-4 h-4" />
                       <span className="text-sm">
-                        {car.locationDetails?.city || "Unknown Location"},
-                        {car.locationDetails?.address}
+                        {car.pickUpLocation?.city}
+                      </span>
+                      <span className="text-sm">
+                        {car.pickUpLocation?.address}
                       </span>
                     </div>
 
@@ -398,5 +362,37 @@ const CarManagement = () => {
     </div>
   );
 };
+
+export async function getServerSideProps() {
+  try {
+    // Fetch data from external API
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const [carsRes, locationsRes] = await Promise.all([
+      fetch(`${baseUrl}/api/cars`),
+      fetch(`${baseUrl}/api/locations`),
+    ]);
+
+    const [fetchedCars, locations] = await Promise.all([
+      carsRes.json(),
+      locationsRes.json(),
+    ]);
+
+    // Create a map of locations for quick lookups
+    const locationsMap = new Map(locations.map((loc: any) => [loc._id, loc]));
+
+    // Combine car and location data
+    const cars = fetchedCars.map((car: any) => ({
+      ...car,
+      pickUpLocation: locationsMap.get(car.pickUpLocation) || null,
+      dropOffLocation: locationsMap.get(car.dropOffLocation) || null,
+    }));
+
+    // Pass data to the page via props
+    return { props: { cars, locations } };
+  } catch (error) {
+    console.error("Failed to fetch data in getServerSideProps:", error);
+    return { props: { cars: [], locations: [] } };
+  }
+}
 
 export default CarManagement;

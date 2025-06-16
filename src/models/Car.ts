@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document, models, Model } from "mongoose";
-
+interface Location {
+  _id: string;
+  city: string;
+  address: string;
+  type: string[];
+}
 // Interface defining the structure of a Car document
 export interface ICar extends Document {
   make_id: mongoose.Schema.Types.ObjectId;
@@ -13,8 +18,8 @@ export interface ICar extends Document {
   features?: string[]; // <-- This is correctly defined
   rating?: number;
   totalBookings?: number;
-  dropOffLocation: string;
-  pickUpLocation: string;
+  dropOffLocation: Location;
+  pickUpLocation: Location;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,12 +82,12 @@ const CarSchema: Schema<ICar> = new Schema(
       default: 0,
     },
     dropOffLocation: {
-      type: String,
-      trim: true,
+      type: [String],
+      default: [],
     },
     pickUpLocation: {
-      type: String,
-      trim: true,
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true } // Adds createdAt and updatedAt automatically

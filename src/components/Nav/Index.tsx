@@ -69,11 +69,11 @@ const Nav = () => {
         {/* Assuming Dealers, Shop, Pages are actual routes */}
         <li>
           <Link
-            href="/dealers"
+            href="/brands"
             className="hover:text-green-400 transition-colors"
             onClick={handleNavLinkClick}
           >
-            Dealers
+            Brands
           </Link>
         </li>
         <li>

@@ -55,7 +55,8 @@ export default async function handler(
             dropOffLocation: 1,
             createdAt: 1,
             imageUrl: 1,
-            make_id: "$brandDetails.name",
+            features: 1,
+            make: "$brandDetails.name",
             makeModel: "$modelDetails.name",
           },
         },
@@ -77,8 +78,6 @@ export default async function handler(
     try {
       const client = await clientPromise;
       const db = client.db(DB_NAME);
-
-      console.log(req.body);
 
       const { make, makeModel, pickUpLocation, dropOffLocation, ...resData } =
         req.body;

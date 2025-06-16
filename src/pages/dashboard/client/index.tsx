@@ -140,7 +140,10 @@ const ClientManagement = () => {
   // Pagination logic
   const indexOfLastClient = currentPage * clientsPerPage;
   const indexOfFirstClient = indexOfLastClient - clientsPerPage;
-  const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
+  const currentClients = filteredClients.slice(
+    indexOfFirstClient,
+    indexOfLastClient
+  );
   const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -194,9 +197,7 @@ const ClientManagement = () => {
 
   const deleteClient = async (id: string) => {
     try {
-      await deleteData("/api/users", {
-        id,
-      });
+      await deleteData(id);
       window.location.reload();
     } catch (error) {
       console.error("Failed to delete client:", error);
@@ -222,10 +223,14 @@ const ClientManagement = () => {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         isLoaded={isLoaded}
-      /> 
-      
+      />
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-0 md:ml-64' : 'ml-0'}`}>
+      <div
+        className={`transition-all duration-300 ${
+          sidebarOpen ? "ml-0 md:ml-64" : "ml-0"
+        }`}
+      >
         <div className="w-[70rem] ml-[19rem] px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12 mx-auto mt-[2rem]">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
@@ -266,7 +271,9 @@ const ClientManagement = () => {
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-1">
                     {stat.value}
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm">{stat.title}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">
+                    {stat.title}
+                  </p>
                 </div>
               );
             })}
@@ -354,7 +361,9 @@ const ClientManagement = () => {
                           className={`inline-flex items-center space-x-1 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-gradient-to-r ${statusColor} text-white text-xs font-bold`}
                         >
                           <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          <span className="text-xs sm:text-sm">{roleLabel}</span>
+                          <span className="text-xs sm:text-sm">
+                            {roleLabel}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -370,7 +379,9 @@ const ClientManagement = () => {
                   <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                     <div className="flex items-center space-x-2 sm:space-x-3 text-gray-600">
                       <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="text-xs sm:text-sm line-clamp-1">{client.email}</span>
+                      <span className="text-xs sm:text-sm line-clamp-1">
+                        {client.email}
+                      </span>
                     </div>
                     {client.image && (
                       <div className="flex items-center space-x-2 sm:space-x-3 text-gray-600">
@@ -379,13 +390,17 @@ const ClientManagement = () => {
                           alt="Client"
                           className="w-3 h-3 sm:w-4 sm:h-4 rounded-full object-cover"
                         />
-                        <span className="text-xs sm:text-sm truncate">{client.image}</span>
+                        <span className="text-xs sm:text-sm truncate">
+                          {client.image}
+                        </span>
                       </div>
                     )}
                     {client.emailVerified && (
                       <div className="flex items-center space-x-2 sm:space-x-3 text-green-600">
                         <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="text-xs sm:text-sm">Email verifikuar</span>
+                        <span className="text-xs sm:text-sm">
+                          Email verifikuar
+                        </span>
                       </div>
                     )}
                   </div>
@@ -426,46 +441,54 @@ const ClientManagement = () => {
           </div>
 
           {/* Pagination Controls */}
-{filteredClients.length > clientsPerPage && (
-  <div className="flex justify-center items-center mt-8 space-x-2">
-    <button
-      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-      disabled={currentPage === 1}
-      className={`p-2 rounded-lg ${currentPage === 1 
-        ? 'text-gray-400 cursor-not-allowed' 
-        : 'text-gray-700 hover:bg-gray-100'}`}
-    >
-      <ChevronLeft className="w-5 h-5" />
-    </button>
-    
-    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
-      <button
-        key={number}
-        onClick={() => {
-          setCurrentPage(number);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg ${
-          currentPage === number 
-            ? 'bg-blue-600 text-white shadow-md' 
-            : 'text-gray-700 hover:bg-gray-100'
-        } transition-colors duration-200`}
-      >
-        {number}
-      </button>
-    ))}
-    
-    <button
-      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-      disabled={currentPage === totalPages}
-      className={`p-2 rounded-lg ${currentPage === totalPages 
-        ? 'text-gray-400 cursor-not-allowed' 
-        : 'text-gray-700 hover:bg-gray-100'}`}
-    >
-      <ChevronRight className="w-5 h-5" />
-    </button>
-  </div>
-)}
+          {filteredClients.length > clientsPerPage && (
+            <div className="flex justify-center items-center mt-8 space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (number) => (
+                  <button
+                    key={number}
+                    onClick={() => {
+                      setCurrentPage(number);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg ${
+                      currentPage === number
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "text-gray-700 hover:bg-gray-100"
+                    } transition-colors duration-200`}
+                  >
+                    {number}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           {/* Empty State */}
           {filteredClients.length === 0 && (

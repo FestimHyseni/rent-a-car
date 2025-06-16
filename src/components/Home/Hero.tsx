@@ -50,7 +50,6 @@ const Hero: React.FC = () => {
   const handlePickUpDateChange = (date: Date | null) => {
     if (date) {
       const now = new Date();
-      // Check if the date part is today and time is midnight (common default for date-only selection)
       if (
         date.getFullYear() === now.getFullYear() &&
         date.getMonth() === now.getMonth() &&
@@ -59,14 +58,14 @@ const Hero: React.FC = () => {
         date.getMinutes() === 0
       ) {
         const nextHour = new Date();
-        nextHour.setHours(now.getHours() + 1, 0, 0, 0); // Set to current hour + 1, minutes to 0
+        nextHour.setHours(now.getHours() + 1, 0, 0, 0);
         setPickUpDate(nextHour);
       } else {
         setPickUpDate(date);
       }
 
       if (returnDate && date >= returnDate) {
-        setReturnDate(null); // Or set to a date after pickUpDate
+        setReturnDate(null);
       }
     } else {
       setPickUpDate(null);
@@ -75,18 +74,6 @@ const Hero: React.FC = () => {
 
   const handleReturnDateChange = (date: Date | null) => {
     setReturnDate(date);
-  };
-
-  const handlePickUpLocationChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setPickUpLocation(event.target.value);
-  };
-
-  const handleDropOffLocationChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setDropOffLocation(event.target.value);
   };
 
   return (
@@ -168,7 +155,7 @@ const Hero: React.FC = () => {
                 htmlFor="dropOff-location"
                 className="text-xs font-semibold mb-1 block text-gray-600"
               >
-                Pick Up Location
+                Drop off Location
               </label>
               <div className="flex items-center border border-gray-300 px-3 py-2 rounded-lg h-10 bg-white hover:border-gray-400 transition-colors">
                 <MapPin className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
@@ -179,7 +166,7 @@ const Hero: React.FC = () => {
                   className="w-full bg-transparent text-sm text-gray-700 focus:outline-none truncate"
                 >
                   <option value="" disabled>
-                    Pick up Lokacioni
+                    Drop off Lokacioni
                   </option>
 
                   {Array.isArray(locations) &&
@@ -234,17 +221,16 @@ const Hero: React.FC = () => {
                 showTimeSelect
                 dateFormat="MMM d, yyyy h:mm aa"
                 placeholderText="Select date & time"
-                minDate={pickUpDate || new Date()}
-                disabled={!pickUpDate}
+                minDate={new Date()}
                 customInput={
                   <CustomDatePickerInput
                     id="return-date"
                     icon={CalendarDays}
-                    placeholder="Return date & time"
+                    placeholder="return date & time"
                   />
                 }
                 popperPlacement="bottom-start"
-                calendarClassName="font-sans"
+                // calendarClassName="font-sans"
                 timeIntervals={15}
               />
             </div>
