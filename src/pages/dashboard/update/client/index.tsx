@@ -16,15 +16,17 @@ const UpdateClient: React.FC<UpdateClientProps> = ({ client, setShowUpdateModal 
     setFormData(client);
   }, [client]);
 
-  const handleUpdate = async () => {
-    try {
-      await putData({ id: client._id, ...formData });
-      setShowUpdateModal(false);
-      window.location.reload();
-    } catch (error) {
-      console.error("Error updating user:", error);
-    }
-  };
+const handleUpdate = async () => {
+  try {
+    const { _id, ...dataToSend } = formData;
+    await putData({ id: client._id, ...dataToSend });
+    setShowUpdateModal(false);
+    window.location.reload();
+  } catch (error) {
+    console.error("Error updating user:", error);
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
