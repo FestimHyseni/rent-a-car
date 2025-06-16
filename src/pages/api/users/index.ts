@@ -95,34 +95,44 @@ export default async function handler(
       return res.status(500).json({ message: "Internal Server Error" });
     }
   }
-  if (req.method === "PUT") {
-    try {
-      const client = await clientPromise;
-      const db = client.db(DB_NAME);
-      const { id, ...body } = req.body;
+if (req.method === "PUT") {
+  try {
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const { id, role, ...body } = req.body;
 
-      if (!id || !ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid or missing user ID" });
-      }
-
-      const { _id, ...updateData } = body;
-
-      const result = await db
-        .collection(COLLECTION_NAME)
-        .updateOne({ _id: new ObjectId(id) }, { $set: updateData });
-
-      if (result.modifiedCount === 0) {
-        return res
-          .status(404)
-          .json({ message: "User not found or no changes made" });
-      }
-
-      return res.status(200).json({ message: "User updated successfully" });
-    } catch (error) {
-      console.error("❌ Update error:", error);
-      return res.status(500).json({ message: "Internal Server Error" });
+    if (!id || !ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid or missing user ID" });
     }
+
+    const roleDoc = await db.collection("roles").findOne({ name: role || "user" });
+
+    if (!roleDoc) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const updateData = {
+      ...body,
+      role: roleDoc._id, 
+    };
+
+    const result = await db
+      .collection(COLLECTION_NAME)
+      .updateOne({ _id: new ObjectId(id) }, { $set: updateData });
+
+    if (result.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found or no changes made" });
+    }
+
+    return res.status(200).json({ message: "User updated successfully" });
+  } catch (error) {
+    console.error("❌ Update error:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
+}
+
 
   if (req.method === "DELETE") {
     try {
