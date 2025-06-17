@@ -1,10 +1,8 @@
 // pages/bookings/BookingManagement.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, forwardRef, ElementType } from "react";
 import {
     Calendar,
     MapPin,
-    User,
-    Car,
     Plus,
     X,
     CheckCircle2,
@@ -13,7 +11,38 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import useFetch from "@/hooks/useFetch";
-import IBooking from "@/models/Booking";
+import { LocationType } from "@/types/carTypes";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { CalendarDays } from "lucide-react";
+
+// Custom input component for DatePicker
+const CustomDatePickerInput = forwardRef<
+    HTMLButtonElement,
+    {
+        value?: string;
+        onClick?: React.MouseEventHandler<HTMLButtonElement>;
+        placeholder?: string;
+        icon: ElementType;
+        id?: string;
+    }
+>(({ value, onClick, placeholder, icon: IconComponent, id }, ref) => (
+    <button
+        id={id}
+        type="button"
+        className="flex items-center w-full border border-gray-300 px-4 py-3 rounded-2xl text-left text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-colors"
+        onClick={onClick}
+        ref={ref}
+    >
+        <IconComponent className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
+        {value ? (
+            <span className="truncate">{value}</span>
+        ) : (
+            <span className="text-gray-400 truncate">{placeholder}</span>
+        )}
+    </button>
+));
+CustomDatePickerInput.displayName = "CustomDatePickerInput";
 
 const BookingManagement = () => {
     const { data: bookings } = useFetch<any[]>("/api/bookings");
@@ -36,6 +65,33 @@ const BookingManagement = () => {
         dropOffDate: "",
         totalPrice: 0,
     });
+
+    // Round date to nearest hour
+    const roundToHour = (date: Date): Date => {
+        const rounded = new Date(date);
+        rounded.setMinutes(0, 0, 0);
+        return rounded;
+    };
+
+    const handlePickUpDateChange = (date: Date | null) => {
+        if (date) {
+            const roundedDate = roundToHour(date);
+            setNewBooking({
+                ...newBooking,
+                pickUpDate: roundedDate.toISOString()
+            });
+        }
+    };
+
+    const handleDropOffDateChange = (date: Date | null) => {
+        if (date) {
+            const roundedDate = roundToHour(date);
+            setNewBooking({
+                ...newBooking,
+                dropOffDate: roundedDate.toISOString()
+            });
+        }
+    };
 
     const handleNewBookingChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -95,11 +151,13 @@ const BookingManagement = () => {
                     {bookings?.map((b) => {
                         const car = cars?.find((c) => c._id === b.carId);
                         const user = users?.find((u) => u._id === b.userId);
-                        const pickup = locations?.find((l) => l._id === b.pickUpLocation);
-                        const dropoff = locations?.find((l) => l._id === b.dropOffLocation);
+
+                        // Get locations from booking data
+                        const pickupLocation = b.pickupLocation as LocationType;
+                        const dropoffLocation = b.dropoffLocation as LocationType;
 
                         const isConfirmed = b.status === "Confirmed";
-                        const statusIcon = isConfirmed ? CheckCircle2 : Clock;
+                        const StatusIcon = isConfirmed ? CheckCircle2 : Clock; // Fixed variable name
                         const statusLabel = isConfirmed ? "Konfirmuar" : "Në pritje";
                         const statusColor = isConfirmed ? "text-green-600" : "text-yellow-600";
 
@@ -115,13 +173,15 @@ const BookingManagement = () => {
                                     <div className="text-gray-500 text-sm flex items-center space-x-2">
                                         <MapPin className="w-4 h-4" />
                                         <span>
-                                            {pickup?.city}, {pickup?.address} → {dropoff?.city}, {dropoff?.address}
+                                            {pickupLocation?.city}, {pickupLocation?.address} →{" "}
+                                            {dropoffLocation?.city}, {dropoffLocation?.address}
                                         </span>
                                     </div>
                                     <div className="text-gray-500 text-sm flex items-center space-x-2 mt-1">
                                         <Calendar className="w-4 h-4" />
                                         <span>
-                                            {new Date(b.pickUpDate).toLocaleDateString()} - {new Date(b.dropOffDate).toLocaleDateString()}
+                                            {new Date(b.pickUpDate).toLocaleString()} -{" "}
+                                            {new Date(b.dropOffDate).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -130,7 +190,8 @@ const BookingManagement = () => {
                                         €{b.totalPrice.toFixed(2)}
                                     </p>
                                     <div className="flex items-center space-x-2">
-                                        <statusIcon className={`w-4 h-4 ${statusColor}`} />
+                                        {/* Fixed component name */}
+                                        <StatusIcon className={`w-4 h-4 ${statusColor}`} />
                                         <span className={`text-sm ${statusColor}`}>{statusLabel}</span>
                                         <button className="p-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-2xl transition-all">
                                             <Trash2 className="w-4 h-4" />
@@ -211,20 +272,50 @@ const BookingManagement = () => {
                                     ))}
                                 </select>
 
-                                <input
-                                    type="date"
-                                    name="pickUpDate"
-                                    value={newBooking.pickUpDate}
-                                    onChange={handleNewBookingChange}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl"
-                                />
-                                <input
-                                    type="date"
-                                    name="dropOffDate"
-                                    value={newBooking.dropOffDate}
-                                    onChange={handleNewBookingChange}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl"
-                                />
+                                {/* Pick-up Date & Time */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Pick-up Date & Time
+                                    </label>
+                                    <DatePicker
+                                        selected={newBooking.pickUpDate ? new Date(newBooking.pickUpDate) : null}
+                                        onChange={handlePickUpDateChange}
+                                        showTimeSelect
+                                        dateFormat="MMM d, yyyy h:mm aa"
+                                        placeholderText="Select date & time"
+                                        minDate={new Date()}
+                                        customInput={
+                                            <CustomDatePickerInput
+                                                icon={CalendarDays}
+                                                placeholder="Pick-up date & time"
+                                            />
+                                        }
+                                        timeIntervals={60}
+                                    />
+                                </div>
+
+                                {/* Drop-off Date & Time */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Drop-off Date & Time
+                                    </label>
+                                    <DatePicker
+                                        selected={newBooking.dropOffDate ? new Date(newBooking.dropOffDate) : null}
+                                        onChange={handleDropOffDateChange}
+                                        showTimeSelect
+                                        dateFormat="MMM d, yyyy h:mm aa"
+                                        placeholderText="Select date & time"
+                                        minDate={newBooking.pickUpDate ? new Date(newBooking.pickUpDate) : new Date()}
+                                        customInput={
+                                            <CustomDatePickerInput
+                                                icon={CalendarDays}
+                                                placeholder="Drop-off date & time"
+                                            />
+                                        }
+                                        timeIntervals={60}
+                                    />
+                                </div>
+
                                 <input
                                     type="number"
                                     name="totalPrice"

@@ -1,4 +1,3 @@
-// pages/api/cars/index.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 
@@ -13,9 +12,9 @@ export default async function handler(
     try {
       const client = await clientPromise;
       const db = client.db(DB_NAME);
-      const cars = await db.collection(COLLECTION_NAME).find().toArray();
+      const locations = await db.collection(COLLECTION_NAME).find().toArray();
 
-      return res.status(200).json(cars);
+      return res.status(200).json(locations);
     } catch (error) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
