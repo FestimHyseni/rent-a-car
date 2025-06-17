@@ -1,4 +1,3 @@
-// components/Nav/Nav.tsx (or your actual path)
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -8,7 +7,7 @@ import {
   UserCircle,
   ChevronDown,
   PlusCircle,
-} from "lucide-react"; // Example icons
+} from "lucide-react";
 
 const Nav = () => {
   const { data: session, status } = useSession();
@@ -33,7 +32,6 @@ const Nav = () => {
     };
   }, []);
 
-  // Handle navigation link clicks to close dropdown if open (optional)
   const handleNavLinkClick = () => {
     setIsUserDropdownOpen(false);
   };
@@ -66,7 +64,6 @@ const Nav = () => {
             Search
           </Link>
         </li>
-        {/* Assuming Dealers, Shop, Pages are actual routes */}
         <li>
           <Link
             href="/brands"
@@ -85,7 +82,6 @@ const Nav = () => {
             Shop
           </Link>
         </li>
-        {/* <li><Link href="/Pages" className="hover:text-green-400 transition-colors" onClick={handleNavLinkClick}>Pages</Link></li> */}
         <li>
           <Link
             href="/about"
@@ -106,12 +102,10 @@ const Nav = () => {
         </li>
       </ul>
       <div className="flex gap-4 items-center">
-        {/* Add Listing Button - Kept as is, but you might want to make it conditional on login */}
         <button className="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded-md shadow-sm transition-colors flex items-center gap-2">
           <PlusCircle size={16} /> Add Listing
         </button>
 
-        {/* Auth Section */}
         <div className="flex items-center">
           {status === "loading" && (
             <div className="animate-pulse flex items-center space-x-2">
@@ -121,7 +115,7 @@ const Nav = () => {
 
           {status === "unauthenticated" && (
             <button
-              onClick={() => signIn()} // Redirects to your /login page defined in NextAuth config
+              onClick={() => signIn()}
               className="text-sm hover:text-green-400 transition-colors flex items-center gap-1"
             >
               <LogIn size={16} />
@@ -147,19 +141,17 @@ const Nav = () => {
                   <UserCircle size={22} className="text-slate-400" />
                 )}
                 <span className="hidden sm:inline text-sm font-medium">
-                  {session.user.name?.split(" ")[0] || session.user.email}{" "}
-                  {/* Show first name or email */}
+                  {session.user.name?.split(" ")[0] || session.user.email}
                 </span>
                 <ChevronDown
                   size={16}
-                  className={`transition-transform duration-200 ${
-                    isUserDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`transition-transform duration-200 ${isUserDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-xl z-50 py-1 ring-1 ring-black ring-opacity-5 origin-top-right">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-xl z-[1000] py-1 ring-1 ring-black ring-opacity-5 origin-top-right border border-red-500">
                   <div className="px-4 py-3">
                     <p className="text-xs text-slate-500">Signed in as</p>
                     <p
@@ -171,11 +163,18 @@ const Nav = () => {
                   </div>
                   <div className="border-t border-slate-200"></div>
                   <Link
-                    href="/profile" // Example: user profile page
+                    href="/profile"
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     onClick={handleNavLinkClick}
                   >
                     Your Profile
+                  </Link>
+                  <Link
+                    href="/mybookings"
+                    className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
+                    onClick={handleNavLinkClick}
+                  >
+                    My Bookings
                   </Link>
                   {session.user.role === "admin" && (
                     <Link

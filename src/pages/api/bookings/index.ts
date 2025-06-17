@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import clientPromise from "@/lib/mongodb";
+import clientPromise from "../../../lib/mongodb";
 import { ObjectId } from "mongodb";
-import { checkCarAvailability } from "@/lib/availabilityCheck";
+import { checkCarAvailability } from "../../../lib/availabilityCheck";
 
 const DB_NAME = "public";
 const COLLECTION_NAME = "bookings";
