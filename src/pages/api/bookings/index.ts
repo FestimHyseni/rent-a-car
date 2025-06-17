@@ -1,9 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { checkCarAvailability } from "@/lib/availabilityCheck";
 
 const DB_NAME = "public";
 const COLLECTION_NAME = "bookings";
+const LOCATIONS_COLLECTION = "locations";
 
 export default async function handler(
     req: NextApiRequest,
@@ -14,7 +16,55 @@ export default async function handler(
 
     if (req.method === "GET") {
         try {
-            const bookings = await db.collection(COLLECTION_NAME).find().toArray();
+            const bookings = await db
+                .collection(COLLECTION_NAME)
+                .aggregate([
+                    {
+                        $lookup: {
+                            from: LOCATIONS_COLLECTION,
+                            localField: "pickUpLocation",
+                            foreignField: "_id",
+                            as: "pickupLocation"
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: LOCATIONS_COLLECTION,
+                            localField: "dropOffLocation",
+                            foreignField: "_id",
+                            as: "dropoffLocation"
+                        }
+                    },
+                    {
+                        $unwind: {
+                            path: "$pickupLocation",
+                            preserveNullAndEmptyArrays: true
+                        }
+                    },
+                    {
+                        $unwind: {
+                            path: "$dropoffLocation",
+                            preserveNullAndEmptyArrays: true
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            carId: 1,
+                            userId: 1,
+                            pickUpDate: 1,
+                            dropOffDate: 1,
+                            totalPrice: 1,
+                            status: 1,
+                            paymentStatus: 1,
+                            createdAt: 1,
+                            pickupLocation: 1,
+                            dropoffLocation: 1
+                        }
+                    }
+                ])
+                .toArray();
+
             return res.status(200).json(bookings);
         } catch (error) {
             return res.status(500).json({ message: "Internal Server Error" });
@@ -33,13 +83,38 @@ export default async function handler(
                 totalPrice,
             } = req.body;
 
+            // Convert dates to Date objects
+            const pickUpDateObj = new Date(pickUpDate);
+            const dropOffDateObj = new Date(dropOffDate);
+
+            // Validate dates
+            if (dropOffDateObj <= pickUpDateObj) {
+                return res.status(400).json({
+                    message: "Drop-off date must be after pick-up date"
+                });
+            }
+
+            // Check car availability
+            const isAvailable = await checkCarAvailability(
+                db,
+                new ObjectId(carId),
+                pickUpDateObj,
+                dropOffDateObj
+            );
+
+            if (!isAvailable) {
+                return res.status(400).json({
+                    message: "Car is not available for the selected dates"
+                });
+            }
+
             const newBooking = {
                 carId: new ObjectId(carId),
                 userId: new ObjectId(userId),
                 pickUpLocation: new ObjectId(pickUpLocation),
                 dropOffLocation: new ObjectId(dropOffLocation),
-                pickUpDate: new Date(pickUpDate),
-                dropOffDate: new Date(dropOffDate),
+                pickUpDate: pickUpDateObj,
+                dropOffDate: dropOffDateObj,
                 totalPrice: parseFloat(totalPrice),
                 status: "Pending",
                 paymentStatus: "Unpaid",
@@ -51,6 +126,7 @@ export default async function handler(
                 .status(201)
                 .json({ message: "Booking created", id: result.insertedId });
         } catch (error) {
+            console.error("Booking creation error:", error);
             return res.status(500).json({ message: "Internal Server Error" });
         }
     }

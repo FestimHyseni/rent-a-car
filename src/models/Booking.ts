@@ -1,4 +1,4 @@
-// models/Booking.ts or Booking.js
+// models/Booking.ts
 import mongoose from "mongoose";
 const { Schema, model, Types } = mongoose;
 
@@ -6,22 +6,22 @@ const bookingSchema = new Schema(
     {
         carId: {
             type: Types.ObjectId,
-            ref: "Car", // Lidhja me tabelën/car koleksionin e makinave
+            ref: "Car",
             required: true,
         },
         userId: {
             type: Types.ObjectId,
-            ref: "User", // Lidhja me përdoruesin
+            ref: "User",
             required: true,
         },
         pickUpLocation: {
             type: Types.ObjectId,
-            ref: "Location", // Lidhja me lokacionin e marrjes
+            ref: "Location",
             required: true,
         },
         dropOffLocation: {
             type: Types.ObjectId,
-            ref: "Location", // Lidhja me lokacionin e kthimit
+            ref: "Location",
             required: true,
         },
         pickUpDate: {
@@ -46,15 +46,14 @@ const bookingSchema = new Schema(
             enum: ["Unpaid", "Paid", "Refunded"],
             default: "Unpaid",
         },
-        createdAt: {
-            type: Date,
-            default: Date.now,
-        },
     },
     {
         timestamps: true,
     }
 );
+
+// Add index for faster availability checks
+bookingSchema.index({ carId: 1, pickUpDate: 1, dropOffDate: 1 });
 
 const Booking = model("Booking", bookingSchema);
 
