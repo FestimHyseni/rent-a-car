@@ -30,7 +30,7 @@ const NotFoundPage = () => {
         </p>
         <p className="mt-2 text-md md:text-lg text-slate-400 max-w-md mx-auto">
           It seems the page you were looking for has veered off-course or is
-          parked in another spot. Let's navigate you back to safety.
+          parked in another spot. Let&apo;s navigate you back to safety.
         </p>
 
         <div className="mt-10">

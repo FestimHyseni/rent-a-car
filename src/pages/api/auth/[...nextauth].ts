@@ -1,11 +1,45 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+// auth.ts (or pages/api/auth/[...nextauth].ts)
+import NextAuth, { NextAuthOptions, User as NextAuthUserType } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import clientPromise from "../../../lib/mongodb";
-import User from "../../../models/User";
+import User from "../../../models/User"; // Your Mongoose User model
+import Role from "../../../models/Role"; // Import your Mongoose Role model
 import dbConnect from "../../../lib/dbConnect";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose"; // Import mongoose to use mongoose.Schema.Types.ObjectId
+
+// Extend NextAuth types to include custom properties
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string; // This will be the role name string in the session
+      number?: string;
+      country?: string;
+      city?: string;
+      address?: string;
+      createdAt?: string;
+    };
+    accessToken?: string;
+  }
+
+  interface JWT {
+    id: string;
+    role?: string; // This will be the role name string in the JWT
+    image?: string;
+    number?: string;
+    country?: string;
+    city?: string;
+    address?: string;
+    createdAt?: string;
+    accessToken?: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -30,9 +64,14 @@ export const authOptions: NextAuthOptions = {
 
         await dbConnect();
 
-        const user = await User.findOne({ email: credentials.email }).select(
-          "+password"
-        );
+        // Fetch user and populate the 'role' field to get the role document
+        // Explicitly type the result of populate for better type inference
+        const user = await User.findOne({ email: credentials.email })
+          .select("+password")
+          .populate<{
+            role: { _id: mongoose.Schema.Types.ObjectId; name: string };
+          }>("role")
+          .lean();
 
         if (!user) {
           throw new Error("No user found with this email.");
@@ -51,17 +90,22 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Incorrect password.");
         }
 
+        // Return the user object, ensuring role is the role name string
         return {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
-          role: user.role || "",
+          role:
+            typeof user.role === "object" &&
+            user.role !== null &&
+            "name" in user.role
+              ? user.role.name
+              : "",
           image: user.image || "",
           number: user.number || "",
           country: user.country || "",
           city: user.city || "",
           address: user.address || "",
-          createdAt: user.createdAt?.toISOString() || "",
         };
       },
     }),
@@ -74,11 +118,19 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (account && user) {
-        token.accessToken = account.access_token;
+    async jwt({
+      token,
+      user,
+      account,
+    }: {
+      token: any;
+      user?: any;
+      account?: any;
+    }) {
+      if (user) {
         token.id = user.id;
-        token.role = user.role || "";
+        token.name = user.name;
+        token.email = user.email;
         token.image = user.image || "";
         token.number = user.number || "";
         token.country = user.country || "";
@@ -86,19 +138,56 @@ export const authOptions: NextAuthOptions = {
         token.address = user.address || "";
         token.createdAt = user.createdAt || "";
 
-        // If OAuth and user fields missing, fetch from DB
-        if (!user.number || !user.country || !user.city || !user.address) {
-          await dbConnect();
-          const dbUser = await User.findById(user.id).lean();
-          if (dbUser) {
-            token.number = dbUser.number || "";
-            token.country = dbUser.country || "";
-            token.city = dbUser.city || "";
-            token.address = dbUser.address || "";
-            token.image = dbUser.image || "";
-            token.createdAt = dbUser.createdAt?.toISOString() || "";
+        if (account) {
+          token.accessToken = account.access_token;
+        }
+
+        await dbConnect();
+
+        let userRoleName: string | undefined;
+
+        // Type guard for populated role object
+        if (
+          user.role &&
+          typeof user.role === "object" &&
+          "name" in user.role &&
+          user.role.name
+        ) {
+          userRoleName = user.role.name;
+        } else if (
+          typeof user.role === "string" &&
+          mongoose.Types.ObjectId.isValid(user.role)
+        ) {
+          try {
+            const roleDoc = await Role.findById(user.role).lean();
+            if (roleDoc) {
+              userRoleName = roleDoc.name;
+            }
+          } catch (e) {
+            console.error(
+              "Error fetching role name by ID (valid ObjectId string assumed):",
+              e
+            );
+          }
+        } else {
+          // Fallback for OAuth or if role wasn't explicitly handled in authorize.
+          // Fetch the user from the DB and populate the role.
+          const dbUser = await User.findById(user.id)
+            .populate<{
+              role: { _id: mongoose.Schema.Types.ObjectId; name: string };
+            }>("role")
+            .lean();
+          if (
+            dbUser &&
+            dbUser.role &&
+            typeof dbUser.role === "object" &&
+            "name" in dbUser.role &&
+            dbUser.role.name
+          ) {
+            userRoleName = dbUser.role.name;
           }
         }
+        token.role = userRoleName;
       }
 
       return token;
@@ -107,7 +196,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role as string; // Role is already the name string
         session.user.image = token.image as string;
         session.user.number = token.number as string;
         session.user.country = token.country as string;

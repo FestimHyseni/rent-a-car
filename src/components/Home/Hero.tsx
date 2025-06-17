@@ -86,7 +86,7 @@ const Hero: React.FC = () => {
         <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
           Looking for a vehicle?
           <br />
-          You're in the perfect spot.
+          You&apos;re in the perfect spot.
         </h1>
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-white">
           <span className="flex items-center gap-2">
@@ -203,7 +203,7 @@ const Hero: React.FC = () => {
                 }
                 popperPlacement="bottom-start"
                 // calendarClassName="font-sans"
-                timeIntervals={15}
+                timeIntervals={60}
               />
             </div>
 
@@ -231,7 +231,7 @@ const Hero: React.FC = () => {
                 }
                 popperPlacement="bottom-start"
                 // calendarClassName="font-sans"
-                timeIntervals={15}
+                timeIntervals={60}
               />
             </div>
 

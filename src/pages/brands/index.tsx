@@ -21,9 +21,9 @@ const Brands: React.FC<BrandsProps> = ({ brands }) => {
               A Fleet for Every Journey
             </h1>
             <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-600 leading-relaxed">
-              We partner with the world's leading car manufacturers to bring you
-              a diverse selection of reliable, stylish, and high-performance
-              vehicles for any occasion.
+              We partner with the world&apos;s leading car manufacturers to
+              bring you a diverse selection of reliable, stylish, and
+              high-performance vehicles for any occasion.
             </p>
           </section>
 

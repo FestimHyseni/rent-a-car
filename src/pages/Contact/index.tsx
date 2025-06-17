@@ -1,7 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
-import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaPaperPlane } from "react-icons/fa";
 import { motion } from "framer-motion";
 import useFetch from "@/hooks/useFetch";
+import { Mail, MapPin, Phone, Send } from "lucide-react";
 
 interface FormData {
   name: string;
@@ -20,31 +20,36 @@ const ContactUs: React.FC = () => {
     name: "",
     email: "",
     subject: "",
-    message: ""
+    message: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus | null>(null);
   const { postData } = useFetch("/api/contact");
-  
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const response = await postData(formData);
       setSubmitStatus({ success: true, message: "Message sent successfully!" });
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
-      setSubmitStatus({ success: false, message: "Failed to send message. Please try again." });
+      setSubmitStatus({
+        success: false,
+        message: "Failed to send message. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +58,7 @@ const ContactUs: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -63,24 +68,27 @@ const ContactUs: React.FC = () => {
             Contact Us
           </h2>
           <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-            We'd love to hear from you! Send us a message and we'll respond as soon as possible.
+            We&apos;d love to hear from you! Send us a message and we&apo;ll
+            respond as soon as possible.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-white rounded-2xl shadow-xl p-8"
           >
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h3>
-            
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">
+              Get in Touch
+            </h3>
+
             <div className="space-y-6">
               <div className="flex items-start">
                 <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-lg">
-                  <FaEnvelope className="h-6 w-6 text-indigo-600" />
+                  <Mail className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="ml-4">
                   <h4 className="text-lg font-medium text-gray-900">Email</h4>
@@ -91,7 +99,7 @@ const ContactUs: React.FC = () => {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-lg">
-                  <FaPhone className="h-6 w-6 text-indigo-600" />
+                  <Phone className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="ml-4">
                   <h4 className="text-lg font-medium text-gray-900">Phone</h4>
@@ -102,51 +110,68 @@ const ContactUs: React.FC = () => {
 
               <div className="flex items-start">
                 <div className="flex-shrink-0 bg-indigo-100 p-3 rounded-lg">
-                  <FaMapMarkerAlt className="h-6 w-6 text-indigo-600" />
+                  <MapPin className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div className="ml-4">
                   <h4 className="text-lg font-medium text-gray-900">Address</h4>
                   <p className="mt-1 text-gray-600">123 Business Ave</p>
-                  <p className="mt-1 text-gray-600">Suite 400, San Francisco, CA 94107</p>
+                  <p className="mt-1 text-gray-600">
+                    Suite 400, San Francisco, CA 94107
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="mt-8">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Follow Us</h4>
+              <h4 className="text-lg font-medium text-gray-900 mb-4">
+                Follow Us
+              </h4>
               <div className="flex space-x-4">
-                {['Facebook', 'Twitter', 'Instagram', 'LinkedIn'].map((social) => (
-                  <a 
-                    key={social} 
-                    href="#" 
-                    className="bg-gray-100 hover:bg-indigo-100 p-3 rounded-lg transition-colors duration-200"
-                  >
-                    <span className="sr-only">{social}</span>
-                    <div className="h-5 w-5 text-gray-600 hover:text-indigo-600" />
-                  </a>
-                ))}
+                {["Facebook", "Twitter", "Instagram", "LinkedIn"].map(
+                  (social) => (
+                    <a
+                      key={social}
+                      href="#"
+                      className="bg-gray-100 hover:bg-indigo-100 p-3 rounded-lg transition-colors duration-200"
+                    >
+                      <span className="sr-only">{social}</span>
+                      <div className="h-5 w-5 text-gray-600 hover:text-indigo-600" />
+                    </a>
+                  )
+                )}
               </div>
             </div>
           </motion.div>
 
           {/* Contact Form */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-white rounded-2xl shadow-xl p-8"
           >
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Send Us a Message</h3>
-            
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">
+              Send Us a Message
+            </h3>
+
             {submitStatus && (
-              <div className={`mb-6 p-4 rounded-lg ${submitStatus.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+              <div
+                className={`mb-6 p-4 rounded-lg ${
+                  submitStatus.success
+                    ? "bg-green-50 text-green-800"
+                    : "bg-red-50 text-red-800"
+                }`}
+              >
                 {submitStatus.message}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Full Name
                 </label>
                 <div className="mt-1">
@@ -163,7 +188,10 @@ const ContactUs: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Email Address
                 </label>
                 <div className="mt-1">
@@ -180,7 +208,10 @@ const ContactUs: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="subject"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Subject
                 </label>
                 <div className="mt-1">
@@ -197,7 +228,10 @@ const ContactUs: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Message
                 </label>
                 <div className="mt-1">
@@ -222,10 +256,10 @@ const ContactUs: React.FC = () => {
                   className="w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
                 >
                   {isSubmitting ? (
-                    'Sending...'
+                    "Sending..."
                   ) : (
                     <>
-                      <FaPaperPlane className="mr-2" />
+                      <Send className="mr-2" />
                       Send Message
                     </>
                   )}

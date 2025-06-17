@@ -3,7 +3,6 @@
 import Head from "next/head";
 import React from "react";
 // You might want to import a shared Layout component if you have one
-// import Layout from '../components/Layout'; // Example
 
 // Placeholder for team member data - replace with actual data or remove
 const teamMembers = [
@@ -71,8 +70,9 @@ const AboutPage = () => {
               </p>
               <p className="text-slate-600 text-lg leading-relaxed">
                 We believe that renting a car should be simple, convenient, and
-                affordable. Whether you're traveling for business or leisure,
-                we're committed to getting you on the road quickly and safely.
+                affordable. Whether you&apos;re traveling for business or
+                leisure, we&apos;re committed to getting you on the road quickly
+                and safely.
               </p>
             </div>
           </section>
@@ -88,7 +88,7 @@ const AboutPage = () => {
                 idea: to make car rental better. Frustrated by complicated
                 booking processes and hidden fees, our founders envisioned a
                 service that puts the customer first. From a small fleet of just
-                a few cars, we've grown into a trusted name in car rentals,
+                a few cars, we&apos;ve grown into a trusted name in car rentals,
                 serving thousands of happy travelers each year.
               </p>
               <p className="text-slate-600 text-lg leading-relaxed">

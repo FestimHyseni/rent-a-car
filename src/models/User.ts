@@ -1,15 +1,15 @@
 import mongoose, { Schema, Document, models, Model } from "mongoose";
 
 export interface IUser extends Document {
-  name?: string;
-  email?: string;
-  password?: string;
+  name: string;
+  email: string;
+  password: string;
   image?: string;
   emailVerified?: Date | null;
-  role: mongoose.Schema.Types.ObjectId;
-  country?: string;
-  city?: string;
-  number?: string;
+  role: mongoose.Schema.Types.ObjectId | string;
+  country: string;
+  city: string;
+  number: string;
   address?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -23,8 +23,8 @@ const UserSchema: Schema<IUser> = new Schema(
     image: { type: String },
     emailVerified: { type: Date, default: null },
     role: {
-      type: mongoose.Schema.Types.ObjectId, // <-- Change type to ObjectId
-      ref: "Role", // <-- Add reference to the 'Role' model
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
       required: true,
     },
     country: { type: String },
