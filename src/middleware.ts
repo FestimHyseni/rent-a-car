@@ -39,9 +39,9 @@ export async function middleware(request: NextRequest) {
     const userRole = token.role;
     console.log(userRole);
 
-    if (userRole !== "admin") {
+    if (userRole !== "admin" && userRole !== "staff") {
       // Redirect to an unauthorized page or dashboard
-      const url = new URL("/unauthorized", request.url);
+      const url = new URL("/", request.url);
       // Optional: Add a message if you want to display why they were redirected
       url.searchParams.set("message", "Access Denied: Admin role required.");
       return NextResponse.redirect(url);

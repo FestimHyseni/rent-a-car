@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Header() {
   return (
-    <header className="bg-[#0e1a2b] text-sm py-2 md:none px-4 flex justify-between items-center">
+    <header className="bg-[#0e1a2b] text-sm py-2 hidden md:flex px-4 justify-between items-center">
       <div className="flex gap-6">
         <span>📞 +1 222-555-33-99</span>
         <span>✉️ sale@carento.com</span>
