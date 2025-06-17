@@ -170,6 +170,15 @@ const Nav = () => {
                     </p>
                   </div>
                   <div className="border-t border-slate-200"></div>
+                  {session.user.role === "admin" && (
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
+                      onClick={handleNavLinkClick}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                   <Link
                     href="/profile" // Example: user profile page
                     className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
@@ -177,15 +186,6 @@ const Nav = () => {
                   >
                     Your Profile
                   </Link>
-                  {session.user.role === "admin" && (
-                    <Link
-                      href="/admin"
-                      className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
-                      onClick={handleNavLinkClick}
-                    >
-                      Dashboard
-                    </Link>
-                  )}
                   <div className="border-t border-slate-200"></div>
                   <button
                     onClick={() => {
