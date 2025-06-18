@@ -19,10 +19,12 @@ import dayjs from "dayjs";
 
 interface Booking {
     _id: string;
-    car?: {
+    carId?: {  // Changed from 'car' to 'carId' to match API
         _id?: string;
-        make?: string;
-        makeModel?: string;
+        make?: string;  // This is just the ID in API
+        makeModel?: {
+            name?: string;
+        };
         imageUrl?: string;
     } | null;
     pickUpLocation?: {
@@ -58,7 +60,7 @@ const MyBookings = () => {
             setLoading(true);
             setError(null);
 
-            const res = await fetch("/api/my-bookings");
+            const res = await fetch("/api/mybooking");
 
             if (!res.ok) {
                 // Try to get error message from response
@@ -112,7 +114,7 @@ const MyBookings = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-            <Nav />
+            {/* <Nav /> */}
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-800">My Bookings</h1>
@@ -161,8 +163,9 @@ const MyBookings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {bookings.map((booking) => {
                         // Safe property access with fallbacks
-                        const carMake = getValue(booking.car?.make, "Unknown Car");
-                        const carModel = getValue(booking.car?.makeModel, "");
+                      const carMake = getValue(booking.carId?.make, "Unknown Car");  // Note: This will still show "Unknown Car" because 'make' is just an ID
+                    const carModel = getValue(booking.carId?.makeModel?.name, "");
+
                         const pickupCity = getValue(booking.pickUpLocation?.city, "Unknown City");
                         const pickupAddress = getValue(booking.pickUpLocation?.address, "Address not available");
                         const dropoffCity = getValue(booking.dropOffLocation?.city, "Unknown City");
@@ -182,7 +185,8 @@ const MyBookings = () => {
                             >
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                        {carMake} {carModel}
+                                        {/* {carMake} */}
+                                         {carModel}
                                     </h3>
                                     <div className="text-gray-500 text-sm flex items-center space-x-2">
                                         <MapPin className="w-4 h-4" />

@@ -73,7 +73,7 @@ const Nav = () => {
             Brands
           </Link>
         </li>
-        <li>
+        {/* <li>
           <Link
             href="/shop"
             className="hover:text-green-400 transition-colors"
@@ -81,7 +81,7 @@ const Nav = () => {
           >
             Shop
           </Link>
-        </li>
+        </li> */}
         <li>
           <Link
             href="/about"

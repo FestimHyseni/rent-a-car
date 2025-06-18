@@ -55,6 +55,6 @@ const bookingSchema = new Schema(
 // Add index for faster availability checks
 bookingSchema.index({ carId: 1, pickUpDate: 1, dropOffDate: 1 });
 
-const Booking = model("Booking", bookingSchema);
+const Booking = mongoose.models.Booking || model("Booking", bookingSchema);
 
 export default Booking;

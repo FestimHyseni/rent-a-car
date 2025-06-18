@@ -44,6 +44,13 @@ const CarCard = ({ car }: { car: CarType }) => {
   const [error, setError] = useState<string | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  type LocationType = {
+    _id: string;
+    city: string;
+    address: string;
+    // add other fields if needed
+  };
+  const [locations, setLocations] = useState<LocationType[]>([]);
   const { postData } = useFetch("/api/bookings");
 
   // Round date to nearest hour and set minutes to 0
@@ -75,6 +82,21 @@ const CarCard = ({ car }: { car: CarType }) => {
       setPickUpDate(null);
     }
   };
+
+  useEffect(() => {
+  const fetchLocations = async () => {
+    try {
+      const res = await fetch("/api/locations");
+      const data = await res.json();
+      setLocations(data);
+    } catch (err) {
+      console.error("Failed to fetch locations", err);
+    }
+  };
+
+  fetchLocations();
+}, []);
+
 
   const handleDropOffDateChange = (date: Date | null) => {
     if (date) {
@@ -390,23 +412,55 @@ const CarCard = ({ car }: { car: CarType }) => {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pick-up Location
-                </label>
-                <div className="flex items-center border border-gray-200 px-4 py-3 rounded-2xl">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Pick-up Location
+            </label>
+            <select
+              className="w-full border border-gray-300 px-4 py-3 rounded-2xl text-gray-700"
+              value={car.pickUpLocation._id}
+              onChange={(e) => {
+                const selectedLocation = locations.find(loc => loc._id === e.target.value);
+                if (selectedLocation) {
+                  car.pickUpLocation = selectedLocation;
+                }
+              }}
+            >
+              <option value="">Select pickup location</option>
+              {locations.map((loc) => (
+                <option key={loc._id} value={loc._id}>
+                  {loc.city}, {loc.address}
+                </option>
+              ))}
+            </select>
+
+                {/* <div className="flex items-center border border-gray-200 px-4 py-3 rounded-2xl">
                   <MapPin className="w-4 h-4 mr-2 text-gray-500" />
                   {car.pickUpLocation.city}, {car.pickUpLocation.address}
-                </div>
+                </div> */}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+               <label className="block text-sm font-medium text-gray-700 mb-1">
                   Drop-off Location
                 </label>
-                <div className="flex items-center border border-gray-200 px-4 py-3 rounded-2xl">
-                  <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                  {car.dropOffLocation.city}, {car.dropOffLocation.address}
-                </div>
+                <select
+                  className="w-full border border-gray-300 px-4 py-3 rounded-2xl text-gray-700"
+                  value={car.dropOffLocation._id}
+                  onChange={(e) => {
+                    const selectedLocation = locations.find(loc => loc._id === e.target.value);
+                    if (selectedLocation) {
+                      car.dropOffLocation = selectedLocation;
+                    }
+                  }}
+                >
+                  <option value="">Select dropoff location</option>
+                  {locations.map((loc) => (
+                    <option key={loc._id} value={loc._id}>
+                      {loc.city}, {loc.address}
+                    </option>
+                  ))}
+                </select>
+
               </div>
 
               {pickUpDate && dropOffDate && (

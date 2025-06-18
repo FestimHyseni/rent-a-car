@@ -12,7 +12,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, isLoade
     { id: 'cars', name: 'Makinat', icon: Car, gradient: 'from-purple-600 to-fuchsia-500', path: '/dashboard/cars' },
     { id: 'bookings', name: 'Rezervimet', icon: Calendar, gradient: 'from-emerald-600 to-teal-500', path: '/dashboard/bookings' },
     { id: 'customers', name: 'Klientët', icon: Users, gradient: 'from-rose-600 to-pink-500', path: '/dashboard/client' },
-    { id: 'locations', name: 'Lokacionet', icon: MapPin, gradient: 'from-violet-600 to-purple-500', path: '/lokacionet' },
+    // { id: 'locations', name: 'Lokacionet', icon: MapPin, gradient: 'from-violet-600 to-purple-500', path: '/lokacionet' },
     { id: 'contactus', name: 'ContactUs', icon: Settings, gradient: 'from-slate-600 to-gray-500', path: '/dashboard/contactus' },
   ];
 
@@ -43,7 +43,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, isLoade
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">RentCar</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent" href="/">RentCar</h2>
               <p className="text-xs text-blue-600 font-medium">Premium Experience</p>
             </div>
           </div>

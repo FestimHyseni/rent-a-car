@@ -55,64 +55,64 @@ const ClientManagement = () => {
   const [isLoaded, setIsLoaded] = useState(true);
 
   // Sample data
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      name: "Arjan Berisha",
-      email: "arjan.berisha@email.com",
-      phone: "+355 69 123 4567",
-      location: "Tiranë",
-      joinDate: "2024-01-15",
-      totalBookings: 12,
-      totalSpent: 2400,
-      rating: 4.8,
-      status: "active",
-      lastBooking: "2024-05-20",
-      avatar: "AB",
-    },
-    {
-      id: 2,
-      name: "Elona Kastrati",
-      email: "elona.kastrati@email.com",
-      phone: "+355 68 987 6543",
-      location: "Durrës",
-      joinDate: "2024-02-10",
-      totalBookings: 8,
-      totalSpent: 1800,
-      rating: 4.9,
-      status: "premium",
-      lastBooking: "2024-05-18",
-      avatar: "EK",
-    },
-    {
-      id: 3,
-      name: "Fatmir Hoxha",
-      email: "fatmir.hoxha@email.com",
-      phone: "+355 67 555 1234",
-      location: "Vlorë",
-      joinDate: "2024-03-05",
-      totalBookings: 3,
-      totalSpent: 650,
-      rating: 4.5,
-      status: "active",
-      lastBooking: "2024-04-12",
-      avatar: "FH",
-    },
-    {
-      id: 4,
-      name: "Gentiana Leka",
-      email: "gentiana.leka@email.com",
-      phone: "+355 69 777 8888",
-      location: "Shkodër",
-      joinDate: "2023-11-20",
-      totalBookings: 25,
-      totalSpent: 4200,
-      rating: 5.0,
-      status: "vip",
-      lastBooking: "2024-05-22",
-      avatar: "GL",
-    },
-  ]);
+  // const [clients, setClients] = useState([
+  //   {
+  //     id: 1,
+  //     name: "Arjan Berisha",
+  //     email: "arjan.berisha@email.com",
+  //     phone: "+355 69 123 4567",
+  //     location: "Tiranë",
+  //     joinDate: "2024-01-15",
+  //     totalBookings: 12,
+  //     totalSpent: 2400,
+  //     rating: 4.8,
+  //     status: "active",
+  //     lastBooking: "2024-05-20",
+  //     avatar: "AB",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Elona Kastrati",
+  //     email: "elona.kastrati@email.com",
+  //     phone: "+355 68 987 6543",
+  //     location: "Durrës",
+  //     joinDate: "2024-02-10",
+  //     totalBookings: 8,
+  //     totalSpent: 1800,
+  //     rating: 4.9,
+  //     status: "premium",
+  //     lastBooking: "2024-05-18",
+  //     avatar: "EK",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Fatmir Hoxha",
+  //     email: "fatmir.hoxha@email.com",
+  //     phone: "+355 67 555 1234",
+  //     location: "Vlorë",
+  //     joinDate: "2024-03-05",
+  //     totalBookings: 3,
+  //     totalSpent: 650,
+  //     rating: 4.5,
+  //     status: "active",
+  //     lastBooking: "2024-04-12",
+  //     avatar: "FH",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Gentiana Leka",
+  //     email: "gentiana.leka@email.com",
+  //     phone: "+355 69 777 8888",
+  //     location: "Shkodër",
+  //     joinDate: "2023-11-20",
+  //     totalBookings: 25,
+  //     totalSpent: 4200,
+  //     rating: 5.0,
+  //     status: "vip",
+  //     lastBooking: "2024-05-22",
+  //     avatar: "GL",
+  //   },
+  // ]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -161,38 +161,20 @@ const ClientManagement = () => {
   const stats = [
     {
       title: "Total Klientë",
-      value: clients.length,
+      value: (users || []).length,
       icon: Users,
       gradient: "from-blue-500 to-cyan-500",
       change: "+12%",
     },
     {
-      title: "Klientë VIP",
-      value: clients.filter((c) => c.status === "vip").length,
-      icon: Crown,
+      title: "Adminstrator & Staff",
+  value: (users || []).filter(
+      (u) => String(u.role) === "staff" || String(u.role) === "admin"
+    ).length,      icon: Crown,
       gradient: "from-yellow-500 to-orange-500",
       change: "+25%",
     },
-    {
-      title: "Të Ardhura Mesatare",
-      value:
-        "€" +
-        Math.round(
-          clients.reduce((sum, c) => sum + c.totalSpent, 0) / clients.length
-        ),
-      icon: TrendingUp,
-      gradient: "from-green-500 to-emerald-500",
-      change: "+8%",
-    },
-    {
-      title: "Rating Mesatar",
-      value: (
-        clients.reduce((sum, c) => sum + c.rating, 0) / clients.length
-      ).toFixed(1),
-      icon: Star,
-      gradient: "from-purple-500 to-pink-500",
-      change: "+0.2",
-    },
+    
   ];
 
   const deleteClient = async (id: string) => {
