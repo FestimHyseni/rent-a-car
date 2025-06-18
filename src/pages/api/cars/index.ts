@@ -11,6 +11,20 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle count request FIRST - this must come before the regular GET handler
+  if (req.method === "GET" && req.query.count === "true") {
+    try {
+      const client = await clientPromise;
+      const db = client.db(DB_NAME);
+      const count = await db.collection(CARS_COLLECTION).countDocuments();
+      return res.status(200).json({ count });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+
+  // Regular GET handler for car list
   if (req.method === "GET") {
     try {
       const client = await clientPromise;
@@ -89,8 +103,7 @@ export default async function handler(
         });
       }
 
-      // Optional but good practice: Check if the IDs look valid before creating ObjectId
-      // This is a simple check; more robust libraries like 'bson' can also be used.
+      // Validate ObjectID format
       const isValidObjectId = (id: string) =>
         typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -108,7 +121,6 @@ export default async function handler(
 
       const newCar = {
         ...resData,
-        // Now it's safe to create ObjectIds
         make: new ObjectId(make),
         makeModel: new ObjectId(makeModel),
         pickUpLocation: new ObjectId(pickUpLocation),
@@ -123,7 +135,6 @@ export default async function handler(
         .json({ message: "Car created", id: result.insertedId });
     } catch (error) {
       console.error(error);
-      // Check if the error is a BSONError and provide a more specific message
       if (
         typeof error === "object" &&
         error !== null &&

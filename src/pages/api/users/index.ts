@@ -20,6 +20,30 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle count requests FIRST
+  if (req.method === "GET" && req.query.count === "true") {
+    try {
+      const client = await clientPromise;
+      const db = client.db(DB_NAME);
+
+      let filter = {};
+      if (req.query.role) {
+        // Find role ID if role name is provided
+        const role = await db.collection("roles").findOne({ name: req.query.role });
+        if (role) {
+          filter = { role: role._id };
+        }
+      }
+
+      const count = await db.collection(COLLECTION_NAME).countDocuments(filter);
+      return res.status(200).json({ count });
+    } catch (error) {
+      console.error("User count error:", error);
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  }
+
+  // Regular GET handler for users list
   if (req.method === "GET") {
     try {
       const client = await clientPromise;
@@ -94,6 +118,7 @@ export default async function handler(
       return res.status(500).json({ message: "Internal Server Error" });
     }
   }
+
   if (req.method === "PUT") {
     try {
       const client = await clientPromise;
