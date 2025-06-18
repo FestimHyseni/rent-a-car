@@ -84,18 +84,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, isLoade
         </nav>
 
         {/* Footer Promo */}
-        <div className="absolute bottom-8 left-6 right-6">
-          <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-700 rounded-2xl p-6 text-white shadow-2xl">
-            <div className="flex items-center space-x-3 mb-3">
-              <Award className="w-6 h-6" />
-              <span className="font-bold text-lg">Premium Pro</span>
-            </div>
-            <p className="text-sm mb-4">Unlock advanced analytics & unlimited cars</p>
-            <button className="w-full bg-white/20 hover:bg-white/30 rounded-xl py-3 text-sm font-bold border border-white/30">
-              Upgrade Now ✨
-            </button>
-          </div>
-        </div>
+        
       </div>
     </>
   );

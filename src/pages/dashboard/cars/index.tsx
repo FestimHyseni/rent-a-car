@@ -24,7 +24,7 @@ import {
   Tag,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar/Sidebar";
-import useFetch from "@/hooks/useFetch"; // Maintained for postData
+import useFetch from "@/hooks/useFetch";
 import { ICar } from "@/models/Car";
 import AddCar from "../create/car";
 
@@ -45,7 +45,7 @@ const categories = [
 
 interface CarManagementProps {
   cars: ICar[];
-  locations: any[]; // Replace 'any' with a proper type if available
+  locations: any[];
 }
 
 const CarManagement: React.FC<CarManagementProps> = ({
@@ -58,10 +58,7 @@ const CarManagement: React.FC<CarManagementProps> = ({
   const [filterStatus, setFilterStatus] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [cars, setCars] = useState(initialCars);
-
-  // State for the feature input field
   const [currentFeature, setCurrentFeature] = useState("");
-
   const [newCar, setNewCar] = useState({
     make: "",
     makeModel: "",
@@ -94,7 +91,6 @@ const CarManagement: React.FC<CarManagementProps> = ({
     try {
       const response = await postData(newCarData);
       setShowAddModal(false);
-      // Reset state after saving
       setNewCar({
         make: "",
         makeModel: "",
@@ -107,7 +103,7 @@ const CarManagement: React.FC<CarManagementProps> = ({
         imageUrl: "",
         features: [],
       });
-      setCurrentFeature(""); // Reset feature input as well
+      setCurrentFeature("");
       window.location.reload();
     } catch (error) {
       console.error("Failed to save car", error);
@@ -168,8 +164,9 @@ const CarManagement: React.FC<CarManagementProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6">
-      <div className="max-w-[82rem] mx-auto">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Sidebar - vendosur në të majtë */}
+      <aside className="w-[260px] shrink-0">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -177,7 +174,10 @@ const CarManagement: React.FC<CarManagementProps> = ({
           setSidebarOpen={setSidebarOpen}
           isLoaded={isLoaded}
         />
+      </aside>
 
+      {/* Përmbajtja kryesore - vendosur në të djathtë */}
+      <main className="flex-1 px-10 py-6 overflow-x-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
@@ -350,7 +350,7 @@ const CarManagement: React.FC<CarManagementProps> = ({
             );
           })}
         </div>
-      </div>
+      </main>
 
       {/* Add Car Modal */}
       {showAddModal && (
@@ -365,7 +365,6 @@ const CarManagement: React.FC<CarManagementProps> = ({
 
 export async function getServerSideProps() {
   try {
-    // Fetch data from external API
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
     const [carsRes, locationsRes] = await Promise.all([
       fetch(`${baseUrl}/api/cars`),
@@ -377,17 +376,14 @@ export async function getServerSideProps() {
       locationsRes.json(),
     ]);
 
-    // Create a map of locations for quick lookups
     const locationsMap = new Map(locations.map((loc: any) => [loc._id, loc]));
 
-    // Combine car and location data
     const cars = fetchedCars.map((car: any) => ({
       ...car,
       pickUpLocation: locationsMap.get(car.pickUpLocation) || null,
       dropOffLocation: locationsMap.get(car.dropOffLocation) || null,
     }));
 
-    // Pass data to the page via props
     return { props: { cars, locations } };
   } catch (error) {
     console.error("Failed to fetch data in getServerSideProps:", error);
