@@ -36,8 +36,9 @@ const ContactManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6">
-      <div className="max-w-[82rem] mx-auto">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Sidebar */}
+      <aside className="w-[260px] shrink-0">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -45,7 +46,11 @@ const ContactManagement = () => {
           setSidebarOpen={setSidebarOpen}
           isLoaded={isLoaded}
         />
-
+      </aside>
+  
+      {/* Main content */}
+      <main className="flex-1 px-10 py-6 overflow-x-auto">
+        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -61,14 +66,15 @@ const ContactManagement = () => {
             </div>
           </div>
         </div>
-
+  
+        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {contacts?.map((contact) => {
             const isRead = contact.status === "read";
             const StatusIcon = isRead ? CheckCircle2 : Clock;
             const statusLabel = isRead ? "Lexuar" : "E re";
             const statusColor = isRead ? "text-green-600" : "text-yellow-600";
-
+  
             return (
               <div
                 key={contact._id}
@@ -86,23 +92,23 @@ const ContactManagement = () => {
                       </span>
                     </div>
                   </div>
-
+  
                   <div className="text-gray-500 text-sm flex items-center space-x-2">
                     <Mail className="w-4 h-4" />
                     <span>{contact.email}</span>
                   </div>
-
+  
                   <h4 className="font-medium mt-3 text-gray-700">
                     <AlertCircle className="w-4 h-4 inline mr-1" />
                     {contact.subject}
                   </h4>
-
+  
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl">
                     <MessageSquare className="w-4 h-4 inline mr-1 text-gray-400" />
                     <span className="text-gray-600">{contact.message}</span>
                   </div>
                 </div>
-
+  
                 <div className="flex justify-end mt-4">
                   <button
                     onClick={() => handleDeleteContact(contact._id)}
@@ -115,9 +121,11 @@ const ContactManagement = () => {
             );
           })}
         </div>
-      </div>
+      </main>
     </div>
   );
+  
+  
 };
 
 export default ContactManagement;
